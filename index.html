@@ -450,6 +450,7 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
   const [sortAZ, setSortAZ] = useState(false);
   const [fotoData, setFotoData] = useState(null); // {bild, erkannt}
   const [editItem, setEditItem] = useState(null); // {id, ...item}
+  const neuSchRef = useRef(null); // Ref für zuverlässige Closure-Werte
 
   const bereich = BEREICHE.find(b=>b.id===bId);
   const ort = ALLE_ORTE.find(o=>o.id===oId);
@@ -475,7 +476,8 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
         parsed = parseText(txt).map(p=>({...p, sch:null}));
       }
       if(parsed && parsed.length) {
-        onAdd(oId, parsed.map(x=>({...x, sch: neuSch !== null ? neuSch : (x.sch ?? null)})));
+        const aktuellesSch = neuSchRef.current; // Ref statt State-Closure
+        onAdd(oId, parsed.map(x=>({...x, sch: aktuellesSch !== null ? aktuellesSch : (x.sch ?? null)})));
       }
     } catch(e) { console.error(e); }
     setBusy(false);
@@ -499,7 +501,8 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
         alert("Keine Artikel erkannt. Bitte deutlicheres Foto machen."); setBusy(false); return;
       }
       // Vorschau anzeigen statt direkt speichern
-      const mitSch = parsed.map(x=>({...x, sch: neuSch !== null ? neuSch : (x.sch ?? null)}));
+      const aktuellesSch = neuSchRef.current;
+      const mitSch = parsed.map(x=>({...x, sch: aktuellesSch !== null ? aktuellesSch : (x.sch ?? null)}));
       setFotoData({bild: bildUrl, erkannt: mitSch});
     } catch(e) {
       if(e.message==="KEIN_KEY") alert("📷 Foto-Erkennung benötigt einen Anthropic API-Key.\n\n⚙️ Einstellungen öffnen → API-Key eingeben → Starten");
@@ -521,7 +524,7 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
       {/* Bereiche */}
       <div style={{display:"flex",gap:6,marginBottom:12}}>
         {BEREICHE.map(b => (
-          <button key={b.id} onClick={()=>{setBId(b.id);setOId(b.orte[0].id);setFiltSch(null);}}
+          <button key={b.id} onClick={()=>{setBId(b.id);setOId(b.orte[0].id);setFiltSch(null);setNeuSch(null);neuSchRef.current=null;}}
             style={{flex:1,padding:"8px 2px",borderRadius:10,border:"2px solid",
               borderColor:bId===b.id?"#3d5c3f":"#e5e7eb",
               background:bId===b.id?"#3d5c3f":"white",
@@ -536,7 +539,7 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
         {bereich?.orte.map(o => {
           const cnt = (bestand[o.id]||[]).length;
           return (
-            <button key={o.id} onClick={()=>{setOId(o.id);setFiltSch(null);}}
+            <button key={o.id} onClick={()=>{setOId(o.id);setFiltSch(null);setNeuSch(null);neuSchRef.current=null;}}
               style={{padding:"5px 10px",borderRadius:20,border:"2px solid",
                 borderColor:oId===o.id?"#3d5c3f":"#e5e7eb",
                 background:oId===o.id?"#f0f4f1":"white",
@@ -562,11 +565,11 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
           </div>
           <div style={{display:"flex",alignItems:"center",gap:5,flexWrap:"wrap"}}>
             <span style={{fontSize:10,fontWeight:700,color:"#9ca3af"}}>EINLEGEN IN SCH.:</span>
-            <SchBtn label="– (keine)" aktiv={neuSch===null} onClick={()=>setNeuSch(null)} n={0}/>
+            <SchBtn label="– (keine)" aktiv={neuSch===null} onClick={()=>{setNeuSch(null);neuSchRef.current=null;}} n={0}/>
             {(ort.faecher||[]).map(s=>(
-              <SchBtn key={s} label={`${s}`} aktiv={neuSch===s} onClick={()=>setNeuSch(s)} n={0}/>
+              <SchBtn key={s} label={`${s}`} aktiv={neuSch===s} onClick={()=>{setNeuSch(s);neuSchRef.current=s;}} n={0}/>
             ))}
-            {neuSch!==null && <span style={{fontSize:11,color:"#3d5c3f",fontWeight:700,background:"#e8f3e8",padding:"2px 8px",borderRadius:8}}>→ Schublade {neuSch} gewählt</span>}
+            {neuSch!==null && <span style={{fontSize:12,color:"white",fontWeight:800,background:"#3d5c3f",padding:"3px 10px",borderRadius:8}}>→ Schublade {neuSch} aktiv</span>}
           </div>
         </div>
       )}
