@@ -3,7 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>🏠 Haushalt Manager</title>
+<title>🥒 Haushalt Manager</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F952;</text></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxODAgMTgwIj48cmVjdCB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgcng9IjQwIiBmaWxsPSIjMmMzZTJkIi8+PHRleHQgeD0iOTAiIHk9IjEzNSIgZm9udC1zaXplPSIxMTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcHBsZSBDb2xvciBFbW9qaSxTZWdvZSBVSSBFbW9qaSxzYW5zLXNlcmlmIj4mI3gxRjk1Mjs8L3RleHQ+PC9zdmc+">
+<meta name="apple-mobile-web-app-title" content="Haushalt">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#3d5c3f">
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -255,12 +261,14 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
   const [filtSch, setFiltSch] = useState(null);
   const [neuSch, setNeuSch] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [sortAZ, setSortAZ] = useState(false);
 
   const bereich = BEREICHE.find(b=>b.id===bId);
   const ort = ALLE_ORTE.find(o=>o.id===oId);
   const hatSch = (ort?.sch||0) > 0;
   const alleItems = bestand[oId] || [];
-  const items = filtSch===null ? alleItems : alleItems.filter(i=>i.sch===filtSch);
+  const itemsRaw = filtSch===null ? alleItems : alleItems.filter(i=>i.sch===filtSch);
+  const items = sortAZ ? [...itemsRaw].sort((a,b)=>a.name.localeCompare(b.name,"de")) : itemsRaw;
 
   const hinzufuegen = async txt => {
     setBusy(true);
@@ -338,7 +346,10 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
       <div style={{background:"white",borderRadius:14,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
         <div style={{padding:"10px 14px",background:"#f0f4f1",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <span style={{fontWeight:700,fontSize:13}}>{ort?.icon} {ort?.name} <span style={{fontSize:10,color:"#9ca3af"}}>({ort?.info})</span>{filtSch?` · Schublade ${filtSch}`:""}</span>
-          <span style={{fontSize:11,color:"#6b7280"}}>{items.length} Artikel</span>
+          <div style={{display:"flex",alignItems:"center",gap:6}}>
+            <button onClick={()=>setSortAZ(s=>!s)} style={{background:sortAZ?"#3d5c3f":"#e5e7eb",color:sortAZ?"white":"#374151",border:"none",borderRadius:6,padding:"2px 7px",fontSize:11,cursor:"pointer",fontWeight:600}}>{sortAZ?"A→Z":"Sortieren"}</button>
+            <span style={{fontSize:11,color:"#6b7280"}}>{items.length}</span>
+          </div>
         </div>
         {items.length===0
           ? <div style={{textAlign:"center",padding:"24px",color:"#9ca3af"}}><div style={{fontSize:28}}>{ort?.icon}</div><p style={{margin:"6px 0 0",fontSize:12}}>Leer – Artikel eingeben!</p></div>
@@ -705,6 +716,86 @@ const AufgabenTab = ({todos, onAdd, onToggle, onRemove}) => {
   );
 };
 
+// ── SUCHE TAB ─────────────────────────────────────────────
+const SucheTab = ({bestand}) => {
+  const [query, setQuery] = useState("");
+
+  // Alle Artikel mit Standort zusammenführen
+  const alleArtikel = ALLE_ORTE.flatMap(ort => {
+    const items = bestand[ort.id] || [];
+    return items.map(item => ({...item, ort}));
+  });
+
+  const treffer = query.trim().length < 2 ? [] : alleArtikel.filter(item =>
+    item.name.toLowerCase().includes(query.toLowerCase())
+  ).sort((a,b) => a.name.localeCompare(b.name, "de"));
+
+  const gesamt = alleArtikel.length;
+
+  return (
+    <div>
+      <div style={{background:"white",borderRadius:14,padding:14,marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+        <p style={{margin:"0 0 8px",fontSize:13,fontWeight:700,color:"#374151"}}>🔍 Artikel suchen</p>
+        <input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Artikelname eingeben…"
+          style={{width:"100%",padding:"11px 12px",borderRadius:10,border:"1.5px solid #3d5c3f",fontSize:15,outline:"none",background:"#fafafa"}}
+          autoFocus/>
+        <p style={{margin:"6px 0 0",fontSize:11,color:"#9ca3af"}}>{gesamt} Artikel im Bestand durchsuchen</p>
+      </div>
+
+      {query.trim().length >= 2 && (
+        <div style={{background:"white",borderRadius:14,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+          <div style={{padding:"8px 14px",background:"#f0f4f1",fontSize:12,fontWeight:700,color:"#374151"}}>
+            {treffer.length > 0 ? `${treffer.length} Treffer für "${query}"` : `Nichts gefunden für "${query}"`}
+          </div>
+          {treffer.length === 0 ? (
+            <div style={{textAlign:"center",padding:"24px",color:"#9ca3af"}}>
+              <div style={{fontSize:32}}>🔍</div>
+              <p style={{margin:"8px 0 0",fontSize:13}}>Kein Artikel gefunden</p>
+            </div>
+          ) : treffer.map((item,i) => (
+            <div key={item.id} style={{display:"flex",alignItems:"center",padding:"10px 14px",borderBottom:i<treffer.length-1?"1px solid #f3f4f6":"none",gap:10}}>
+              <div style={{flex:1}}>
+                <div style={{fontSize:14,fontWeight:700}}>{item.name}</div>
+                <div style={{fontSize:12,color:"#6b7280",marginTop:1}}>{item.qty} {item.unit}</div>
+              </div>
+              <div style={{textAlign:"right"}}>
+                <div style={{fontSize:12,fontWeight:600,color:"#3d5c3f"}}>{item.ort.icon} {item.ort.name}</div>
+                <div style={{fontSize:10,color:"#9ca3af"}}>{item.ort.bName}{item.sch ? ` · Schublade ${item.sch}` : ""}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {query.trim().length < 2 && gesamt > 0 && (
+        <div style={{background:"white",borderRadius:14,padding:14,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+          <p style={{fontSize:12,fontWeight:700,color:"#9ca3af",margin:"0 0 10px",textTransform:"uppercase"}}>Alle Artikel A–Z</p>
+          {[...alleArtikel].sort((a,b)=>a.name.localeCompare(b.name,"de")).map((item,i,arr) => (
+            <div key={item.id} style={{display:"flex",alignItems:"center",padding:"8px 0",borderBottom:i<arr.length-1?"1px solid #f3f4f6":"none",gap:10}}>
+              <div style={{flex:1}}>
+                <span style={{fontSize:13,fontWeight:600}}>{item.name}</span>
+                <span style={{fontSize:11,color:"#6b7280",marginLeft:6}}>{item.qty} {item.unit}</span>
+              </div>
+              <div style={{textAlign:"right"}}>
+                <div style={{fontSize:11,fontWeight:600,color:"#3d5c3f"}}>{item.ort.icon} {item.ort.name}</div>
+                <div style={{fontSize:10,color:"#9ca3af"}}>{item.ort.bName}{item.sch ? ` · Sch.${item.sch}` : ""}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {gesamt === 0 && (
+        <div style={{textAlign:"center",padding:"32px",color:"#9ca3af"}}>
+          <div style={{fontSize:36}}>📦</div>
+          <p style={{margin:"8px 0 0",fontSize:14,fontWeight:600}}>Noch nichts im Bestand</p>
+          <p style={{margin:"4px 0 0",fontSize:12}}>Erst Artikel im Bestand-Tab eingeben</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ── HAUPT APP ─────────────────────────────────────────────
 const App = () => {
   const [aktiv, setAktiv] = useState(!!lsGet("hm_fb"));
@@ -768,11 +859,11 @@ const App = () => {
   const gB = Object.values(bestand).reduce((s,a)=>s+a.length,0);
   const oE = einkauf.filter(i=>!i.erledigt).length;
   const oT = todos.filter(t=>!t.erledigt).length;
-  const TABS = [{id:"bestand",l:"Bestand",i:"📦"},{id:"einkauf",l:"Einkauf",i:"🛒"},{id:"uebersicht",l:"Übersicht",i:"📊"},{id:"kassenbon",l:"Kassenbon",i:"🧾"},{id:"aufgaben",l:"Aufgaben",i:"✅"}];
+  const TABS = [{id:"bestand",l:"Bestand",i:"📦"},{id:"einkauf",l:"Einkauf",i:"🛒"},{id:"suche",l:"Suche",i:"🔍"},{id:"kassenbon",l:"Kassenbon",i:"🧾"},{id:"aufgaben",l:"Aufgaben",i:"✅"}];
   const sC = sync==="ok"?"#4ade80":sync==="err"?"#f87171":"#fbbf24";
 
   return (
-    <div style={{fontFamily:"'Segoe UI',system-ui,sans-serif",maxWidth:500,margin:"0 auto",minHeight:"100vh",background:"#f5f5f0",paddingBottom:72}}>
+    <div style={{fontFamily:"'Segoe UI',system-ui,sans-serif",maxWidth:500,margin:"0 auto",minHeight:"100vh",background:"#f5f5f0",display:"flex",flexDirection:"column"}}>
       <div style={{background:"linear-gradient(135deg,#2c3e2d,#3d5c3f)",padding:"14px 18px 10px",color:"white"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
           <h1 style={{margin:0,fontSize:19,fontWeight:800}}>🏠 Haushalt Manager</h1>
@@ -792,15 +883,16 @@ const App = () => {
         </div>
       </div>
 
-      <div style={{padding:12}}>
+      <div style={{padding:12,flex:1}}>
         {tab==="bestand"    && <BestandTab bestand={bestand} onAdd={addBestand} onRemove={remBestand}/>}
         {tab==="einkauf"    && <EinkaufTab einkauf={einkauf} onAdd={addEinkauf} onToggle={togEinkauf} onRemove={remEinkauf} onShop={shopEinkauf} onClear={clearEinkauf}/>}
         {tab==="uebersicht" && <UebersichtTab bestand={bestand} einkauf={einkauf} kassenbons={kassenbons} todos={todos}/>}
         {tab==="kassenbon"  && <KassenbonTab kassenbons={kassenbons} setKassenbons={setKFn} onAddEinkauf={addEinkauf}/>}
+        {tab==="suche"      && <SucheTab bestand={bestand}/>}
         {tab==="aufgaben"   && <AufgabenTab todos={todos} onAdd={addTodo} onToggle={togTodo} onRemove={remTodo}/>}
       </div>
 
-      <nav style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:500,background:"white",borderTop:"1px solid #e5e7eb",display:"flex",boxShadow:"0 -2px 10px rgba(0,0,0,0.08)",zIndex:100}}>
+      <nav style={{position:"sticky",bottom:0,left:0,width:"100%",background:"white",borderTop:"1px solid #e5e7eb",display:"flex",boxShadow:"0 -2px 10px rgba(0,0,0,0.08)",zIndex:100,marginTop:"auto"}}>
         {TABS.map(t=>{
           const badge = t.id==="einkauf"?oE : t.id==="aufgaben"?oT : 0;
           const a = tab===t.id;
