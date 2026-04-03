@@ -337,6 +337,26 @@ const Einrichtung = ({onStart}) => {
   );
 };
 
+// ── SPRACH-BUTTON (klein, für Edit-Felder) ────────────────
+const VoiceBtn = ({onResult}) => {
+  const [an, setAn] = useState(false);
+  const ref = useRef();
+  const toggle = () => {
+    if (an) { ref.current?.stop(); setAn(false); return; }
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return;
+    const r = new SR(); r.lang="de-DE"; r.continuous=false; r.interimResults=false;
+    r.onstart=()=>setAn(true); r.onend=()=>setAn(false); r.onerror=()=>setAn(false);
+    r.onresult=e=>{ onResult(e.results[0][0].transcript); };
+    ref.current=r; r.start();
+  };
+  return (
+    <button onClick={toggle} style={{padding:"8px 10px",borderRadius:8,border:"none",background:an?"#dc2626":"#4a7a4d",color:"white",cursor:"pointer",fontSize:16,flexShrink:0}}>
+      {an?"🔴":"🎤"}
+    </button>
+  );
+};
+
 // ── FOTO-VORSCHAU + BEARBEITUNG ───────────────────────────
 const FotoVorschau = ({bild, erkannt, ortName, faecher, neuSch, onBestaetigen, onAbbrechen}) => {
   const [items, setItems] = useState(erkannt.map((x,i)=>({...x, _id:i})));
@@ -361,11 +381,17 @@ const FotoVorschau = ({bild, erkannt, ortName, faecher, neuSch, onBestaetigen, o
           <div key={item._id} style={{background:"white",borderRadius:12,padding:"10px 12px",marginBottom:8,boxShadow:"0 1px 4px rgba(0,0,0,0.08)",animation:"fadein 0.2s ease"}}>
             {editIdx===idx ? (
               <div>
+                <div style={{display:"flex",gap:6,marginBottom:6}}>
                 <input value={editVal.name??item.name} onChange={e=>setEditVal(p=>({...p,name:e.target.value}))}
                   placeholder="Artikelname" autoFocus
-                  style={{width:"100%",padding:"8px 10px",borderRadius:8,border:"2px solid #3d5c3f",fontSize:16,outline:"none",marginBottom:6}}/>
+                  style={{flex:1,padding:"8px 10px",borderRadius:8,border:"2px solid #3d5c3f",fontSize:16,outline:"none"}}/>
+                <VoiceBtn onResult={txt=>setEditVal(p=>({...p,name:txt.trim()}))}/>
+              </div>
                 <div style={{display:"flex",gap:6,marginBottom:6}}>
-                  <input type="number" value={editVal.qty??item.qty} onChange={e=>setEditVal(p=>({...p,qty:parseFloat(e.target.value)||1}))}
+                  <input type="number" value={editVal.qty??item.qty}
+                    onChange={e=>setEditVal(p=>({...p,qty:e.target.value}))}
+                    onFocus={e=>e.target.select()}
+                    onBlur={e=>setEditVal(p=>({...p,qty:parseFloat(e.target.value)||1}))}
                     style={{width:70,padding:"7px 8px",borderRadius:8,border:"1.5px solid #e5e7eb",fontSize:15,outline:"none"}}/>
                   <select value={editVal.unit??item.unit} onChange={e=>setEditVal(p=>({...p,unit:e.target.value}))}
                     style={{flex:1,padding:"7px 8px",borderRadius:8,border:"1.5px solid #e5e7eb",fontSize:15,outline:"none"}}>
@@ -562,10 +588,16 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
             <div key={item.id}>
               {editItem?.id===item.id ? (
                 <div style={{padding:"10px 14px",background:"#f0f9f0",borderBottom:i<items.length-1?"1px solid #e5e7eb":"none"}}>
-                  <input value={editItem.name} onChange={e=>setEditItem(p=>({...p,name:e.target.value}))} autoFocus
-                    style={{width:"100%",padding:"8px 10px",borderRadius:8,border:"2px solid #3d5c3f",fontSize:17,outline:"none",marginBottom:6}}/>
                   <div style={{display:"flex",gap:6,marginBottom:6}}>
-                    <input type="number" value={editItem.qty} onChange={e=>setEditItem(p=>({...p,qty:parseFloat(e.target.value)||1}))}
+                    <input value={editItem.name} onChange={e=>setEditItem(p=>({...p,name:e.target.value}))} autoFocus
+                      style={{flex:1,padding:"8px 10px",borderRadius:8,border:"2px solid #3d5c3f",fontSize:17,outline:"none"}}/>
+                    <VoiceBtn onResult={txt=>setEditItem(p=>({...p,name:txt.trim()}))}/>
+                  </div>
+                  <div style={{display:"flex",gap:6,marginBottom:6}}>
+                    <input type="number" value={editItem.qty}
+                      onChange={e=>setEditItem(p=>({...p,qty:e.target.value}))}
+                      onFocus={e=>e.target.select()}
+                      onBlur={e=>setEditItem(p=>({...p,qty:parseFloat(e.target.value)||1}))}
                       style={{width:65,padding:"7px 8px",borderRadius:8,border:"1.5px solid #e5e7eb",fontSize:15,outline:"none"}}/>
                     <select value={editItem.unit} onChange={e=>setEditItem(p=>({...p,unit:e.target.value}))}
                       style={{flex:1,padding:"7px 8px",borderRadius:8,border:"1.5px solid #e5e7eb",fontSize:15,outline:"none"}}>
