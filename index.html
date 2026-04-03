@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🏠 Haushalt Manager</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#f5f5f0;}
+input,button,select{font-family:inherit;}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef,useCallback} = React;
+
+// ── Lagerorte ─────────────────────────────────────────────
+const BEREICHE = [
+  {id:"vr", name:"Vorratsraum", icon:"🏠", orte:[
+    {id:"vr1", name:"Samsung Gefrierschrank", icon:"🧊", info:"links",  sch:5},
+    {id:"vr2", name:"Kühlschrank",            icon:"🥶", info:"rechts", sch:5},
+    {id:"vr3", name:"Gefrierschrank",          icon:"❄️", info:"rechts", sch:5},
+  ]},
+  {id:"ku", name:"Küche", icon:"🍳", orte:[
+    {id:"ku1", name:"Gefrierschrank", icon:"🧊", info:"Küche", sch:4},
+    {id:"ku2", name:"Kühlschrank",    icon:"🥶", info:"Küche", sch:5},
+    {id:"ku3", name:"Vorratsschrank", icon:"🏺", info:"Mehl · Gewürze · Öle", sch:0},
+    {id:"ku4", name:"Gemüse-Ablage",  icon:"🥦", info:"Küche", sch:0},
+  ]},
+  {id:"ke", name:"Keller", icon:"⬇️", orte:[
+    {id:"ke1", name:"Gefrierschrank",      icon:"🧊", info:"rechts", sch:5},
+    {id:"ke2", name:"Flaschenkühlschrank", icon:"🍾", info:"links",  sch:4},
+    {id:"ke3", name:"Wasserflaschen",      icon:"💧", info:"Keller", sch:0},
+    {id:"ke4", name:"Weinflaschen",        icon:"🍷", info:"Keller", sch:0},
+    {id:"ke5", name:"Sektflaschen",        icon:"🥂", info:"Keller", sch:0},
+    {id:"ke6", name:"Gemüse & Obst",       icon:"🥔", info:"Kartoffeln · Obst · Rüben", sch:0},
+  ]},
+];
+const ALLE_ORTE = BEREICHE.flatMap(b => b.orte.map(o => ({...o, bName:b.name, bId:b.id})));
+
+// ── Einkauf ───────────────────────────────────────────────
+const GRUPPEN = [
+  {id:"sm", name:"Supermarkt", icon:"🛒", farbe:"#e30613", shops:["Kaufland","Globus","Lidl","Netto","Penny","Aldi"]},
+  {id:"bm", name:"Baumarkt",   icon:"🔨", farbe:"#e63c00", shops:["Bauhaus"]},
+  {id:"on", name:"Online",     icon:"📦", farbe:"#ff9900", shops:["Amazon","eBay"]},
+  {id:"ha", name:"Fürs Haus",  icon:"🏠", farbe:"#6366f1", shops:[]},
+  {id:"bu", name:"Fürs Büro",  icon:"💼", farbe:"#0ea5e9", shops:[]},
+  {id:"ki", name:"Für Kinder", icon:"🧒", farbe:"#f97316", shops:[]},
+  {id:"br", name:"Burano",     icon:"🇮🇹", farbe:"#10b981", shops:[]},
+];
+const SF = {
+  Kaufland:{bg:"#e30613",fg:"white"}, Globus:{bg:"#f5821f",fg:"white"},
+  Lidl:{bg:"#0050aa",fg:"white"}, Netto:{bg:"#f5c800",fg:"#111"},
+  Penny:{bg:"#cc0000",fg:"white"}, Aldi:{bg:"#00529f",fg:"white"},
+  Bauhaus:{bg:"#e63c00",fg:"white"}, Amazon:{bg:"#ff9900",fg:"#111"},
+  eBay:{bg:"#e53238",fg:"white"},
+  "Fürs Haus":{bg:"#6366f1",fg:"white"}, "Fürs Büro":{bg:"#0ea5e9",fg:"white"},
+  "Für Kinder":{bg:"#f97316",fg:"white"}, Burano:{bg:"#10b981",fg:"white"},
+};
+const ALLE_SHOPS = GRUPPEN.flatMap(g => g.shops.length ? g.shops : [g.name]);
+const shopFarbe = n => SF[n] || {bg:"#6b7280",fg:"white"};
+const shopGruppe = n => GRUPPEN.find(g => g.shops.includes(n) || (!g.shops.length && g.name===n));
+
+// ── Helpers ───────────────────────────────────────────────
+const uid = () => Math.random().toString(36).slice(2,9);
+const datum = () => new Date().toLocaleDateString("de-DE");
+const lsGet = k => { try { return localStorage.getItem(k)||""; } catch { return ""; }};
+const lsSet = (k,v) => { try { localStorage.setItem(k,v); } catch {} };
+const lsDel = k => { try { localStorage.removeItem(k); } catch {} };
+
+// ── Lokaler Parser (kein API nötig) ───────────────────────
+function parseText(text) {
+  const EINH = ["kg","g","l","ml","liter","stück","stk","packung","pack","flasche","dose","glas","beutel","becher","kasten","tüte","bund"];
+  return text.split(/[,;\n]+/).map(s=>s.trim()).filter(Boolean).map(line => {
+    const m = line.match(/^(\d+[.,]?\d*)\s*([a-zA-ZäöüÄÖÜ]{1,12})\s+(.+)$/);
+    if (m && EINH.includes(m[2].toLowerCase())) return {name:m[3], qty:parseFloat(m[1].replace(",",".")), unit:m[2], sch:null};
+    const n = line.match(/^(\d+)\s+(.+)$/);
+    if (n) return {name:n[2], qty:parseInt(n[1]), unit:"Stück", sch:null};
+    return {name:line, qty:1, unit:"Stück", sch:null};
+  });
+}
+
+// ── Claude API ────────────────────────────────────────────
+async function claudeCall(messages, system) {
+  const key = lsGet("hm_key");
+  if (!key) throw new Error("kein key");
+  const r = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": key,
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true"
+    },
+    body: JSON.stringify({model:"claude-haiku-4-5-20251001", max_tokens:800, system, messages})
+  });
+  const d = await r.json();
+  if (d.error) throw new Error(d.error.message);
+  const t = d.content?.[0]?.text || "";
+  return JSON.parse(t.replace(/```json|```/g,"").trim());
+}
+
+// ── Firebase ──────────────────────────────────────────────
+const fbBase = () => lsGet("hm_fb");
+const fbUrl = path => `${fbBase()}/haushalt/${path}.json`;
+const fbLesen = async path => {
+  try { const r = await fetch(fbUrl(path)); return r.ok ? await r.json() : null; } catch { return null; }
+};
+const fbSchreiben = async (path, data) => {
+  try { await fetch(fbUrl(path), {method:"PUT", headers:{"Content-Type":"application/json"}, body:JSON.stringify(data)}); } catch {}
+};
+
+// ── Spracheingabe ─────────────────────────────────────────
+const useSprache = cb => {
+  const ref = useRef();
+  const [an, setAn] = useState(false);
+  const start = () => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { alert("Spracherkennung nicht verfügbar"); return; }
+    const r = new SR(); r.lang="de-DE"; r.continuous=false; r.interimResults=false;
+    r.onstart=()=>setAn(true); r.onend=()=>setAn(false); r.onerror=()=>setAn(false);
+    r.onresult=e=>cb(e.results[0][0].transcript);
+    ref.current=r; r.start();
+  };
+  const stop = () => { ref.current?.stop(); setAn(false); };
+  return {an, start, stop};
+};
+const zuBase64 = f => new Promise((ok,err) => {
+  const r = new FileReader();
+  r.onload = () => ok({data:r.result.split(",")[1], mt:f.type});
+  r.onerror = err; r.readAsDataURL(f);
+});
+
+// ── UI Bausteine ──────────────────────────────────────────
+const Btn = ({onClick, disabled, bg="#3d5c3f", children, style={}}) => (
+  <button onClick={onClick} disabled={disabled} style={{
+    padding:"10px 14px", background:disabled?"#e5e7eb":bg,
+    color:disabled?"#9ca3af":"white", border:"none", borderRadius:10,
+    cursor:disabled?"default":"pointer", fontSize:14, fontWeight:700, ...style
+  }}>{children}</button>
+);
+
+const EingabeFeld = ({ph, onOK, onBild, busy}) => {
+  const [t, setT] = useState("");
+  const fRef = useRef();
+  const {an, start, stop} = useSprache(txt => { setT(txt); setTimeout(()=>{ onOK(txt); setT(""); },100); });
+  const go = () => { if(!t.trim()) return; onOK(t); setT(""); };
+  return (
+    <div style={{background:"white", borderRadius:14, padding:14, marginBottom:12, boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+      <div style={{display:"flex", gap:8, marginBottom:8}}>
+        <input value={t} onChange={e=>setT(e.target.value)}
+          onKeyDown={e=>e.key==="Enter"&&go()} placeholder={ph} disabled={busy}
+          style={{flex:1, padding:"10px 12px", borderRadius:10, border:"1.5px solid #e5e7eb", fontSize:14, outline:"none", background:"#fafafa"}}/>
+        <Btn onClick={go} disabled={!t.trim()||busy}>+</Btn>
+      </div>
+      <div style={{display:"flex", gap:8}}>
+        <Btn onClick={an?stop:start} disabled={busy} bg={an?"#dc2626":"#4a7a4d"} style={{flex:1,fontSize:13}}>
+          {an ? "🔴 Stoppen" : "🎤 Sprache"}
+        </Btn>
+        {onBild && <>
+          <Btn onClick={()=>fRef.current?.click()} disabled={busy} bg="#2563eb" style={{flex:1,fontSize:13}}>📷 Foto</Btn>
+          <input ref={fRef} type="file" accept="image/*" style={{display:"none"}}
+            onChange={async e=>{const f=e.target.files[0];if(f){await onBild(f);}e.target.value="";}}/>
+        </>}
+      </div>
+      {busy && <div style={{textAlign:"center",color:"#6b7280",fontSize:12,marginTop:8,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+        <span style={{display:"inline-block",animation:"spin 1s linear infinite"}}>⏳</span> Verarbeite…
+      </div>}
+    </div>
+  );
+};
+
+const SchBtn = ({label, aktiv, onClick, n}) => (
+  <button onClick={onClick} style={{
+    padding:"3px 8px", borderRadius:20, border:"1.5px solid",
+    borderColor:aktiv?"#3d5c3f":"#e5e7eb", background:aktiv?"#3d5c3f":"white",
+    color:aktiv?"white":"#374151", fontSize:11, cursor:"pointer", fontWeight:aktiv?700:400
+  }}>{label}{n>0?` (${n})`:""}</button>
+);
+
+// ── EINRICHTUNG ───────────────────────────────────────────
+const Einrichtung = ({onStart}) => {
+  const [fb, setFb] = useState(lsGet("hm_fb"));
+  const [key, setKey] = useState(lsGet("hm_key"));
+  const [err, setErr] = useState("");
+  const start = () => {
+    const u = fb.trim().replace(/\/$/,"");
+    if (!u.includes("firebaseio.com")) { setErr("Ungültige Firebase-URL – muss firebaseio.com enthalten"); return; }
+    lsSet("hm_fb", u);
+    if (key.trim()) lsSet("hm_key", key.trim());
+    onStart();
+  };
+  return (
+    <div style={{maxWidth:500,margin:"0 auto",minHeight:"100vh",background:"#f5f5f0"}}>
+      <div style={{background:"linear-gradient(135deg,#2c3e2d,#3d5c3f)",padding:"20px",color:"white"}}>
+        <h1 style={{margin:0,fontSize:22,fontWeight:800}}>🏠 Haushalt Manager</h1>
+        <p style={{margin:"4px 0 0",fontSize:13,opacity:0.8}}>Einrichtung</p>
+      </div>
+      <div style={{padding:16}}>
+        <div style={{background:"white",borderRadius:14,padding:16,marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+          <p style={{fontWeight:800,fontSize:15,marginBottom:6}}>🔗 Firebase-URL</p>
+          <input value={fb} onChange={e=>setFb(e.target.value)}
+            placeholder="https://einkauf-haushalt-default-rtdb.firebaseio.com"
+            style={{width:"100%",padding:"11px 12px",borderRadius:10,border:`1.5px solid ${err?"#dc2626":"#e5e7eb"}`,fontSize:13,outline:"none",background:"#fafafa"}}/>
+          {err && <p style={{color:"#dc2626",fontSize:12,marginTop:5}}>⚠️ {err}</p>}
+        </div>
+        <div style={{background:"white",borderRadius:14,padding:16,marginBottom:16,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+          <p style={{fontWeight:800,fontSize:15,marginBottom:2}}>🤖 Anthropic API-Key <span style={{fontSize:11,color:"#9ca3af",fontWeight:400}}>(optional)</span></p>
+          <p style={{fontSize:12,color:"#6b7280",marginBottom:8}}>Nur für Foto-Scan & Kassenbons. Texteingabe funktioniert ohne Key.</p>
+          <input value={key} onChange={e=>setKey(e.target.value)} type="password"
+            placeholder="sk-ant-api03-…"
+            style={{width:"100%",padding:"11px 12px",borderRadius:10,border:"1.5px solid #e5e7eb",fontSize:13,outline:"none",background:"#fafafa"}}/>
+        </div>
+        <button onClick={start} disabled={!fb.trim()} style={{
+          width:"100%", padding:"14px", fontSize:16, fontWeight:800,
+          background:!fb.trim()?"#e5e7eb":"#3d5c3f", color:!fb.trim()?"#9ca3af":"white",
+          border:"none", borderRadius:12, cursor:!fb.trim()?"default":"pointer"
+        }}>✅ Starten</button>
+        <div style={{background:"#fef9c3",borderRadius:12,padding:12,fontSize:12,color:"#92400e",lineHeight:1.6,marginTop:12}}>
+          💡 Beide Smartphones: Diese Seite öffnen → Firebase-URL eingeben → <strong>Zum Homescreen hinzufügen</strong>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── BESTAND TAB ───────────────────────────────────────────
+const BestandTab = ({bestand, onAdd, onRemove}) => {
+  const [bId, setBId] = useState("vr");
+  const [oId, setOId] = useState("vr1");
+  const [filtSch, setFiltSch] = useState(null);
+  const [neuSch, setNeuSch] = useState(null);
+  const [busy, setBusy] = useState(false);
+
+  const bereich = BEREICHE.find(b=>b.id===bId);
+  const ort = ALLE_ORTE.find(o=>o.id===oId);
+  const hatSch = (ort?.sch||0) > 0;
+  const alleItems = bestand[oId] || [];
+  const items = filtSch===null ? alleItems : alleItems.filter(i=>i.sch===filtSch);
+
+  const hinzufuegen = async txt => {
+    setBusy(true);
+    try {
+      let parsed;
+      try {
+        parsed = await claudeCall(
+          [{role:"user",content:txt}],
+          `Extrahiere Lebensmittel für "${ort?.name}".${hatSch?' Schublade als "sch" (Zahl 1-'+ort.sch+') falls erwähnt, sonst null.':''} NUR JSON-Array:[{"name":"X","qty":1,"unit":"Stück","sch":null}]`
+        );
+      } catch {
+        parsed = parseText(txt).map(p=>({...p, sch:null}));
+      }
+      onAdd(oId, parsed.map(x=>({...x, sch: neuSch ?? x.sch ?? null})));
+    } catch(e) { console.error(e); }
+    setBusy(false);
+  };
+
+  return (
+    <div>
+      {/* Bereiche */}
+      <div style={{display:"flex",gap:6,marginBottom:12}}>
+        {BEREICHE.map(b => (
+          <button key={b.id} onClick={()=>{setBId(b.id);setOId(b.orte[0].id);setFiltSch(null);}}
+            style={{flex:1,padding:"8px 2px",borderRadius:10,border:"2px solid",
+              borderColor:bId===b.id?"#3d5c3f":"#e5e7eb",
+              background:bId===b.id?"#3d5c3f":"white",
+              color:bId===b.id?"white":"#374151",fontSize:11,cursor:"pointer",fontWeight:700,lineHeight:1.3}}>
+            {b.icon}<br/>{b.name}
+          </button>
+        ))}
+      </div>
+
+      {/* Orte */}
+      <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:12}}>
+        {bereich?.orte.map(o => {
+          const cnt = (bestand[o.id]||[]).length;
+          return (
+            <button key={o.id} onClick={()=>{setOId(o.id);setFiltSch(null);}}
+              style={{padding:"5px 10px",borderRadius:20,border:"2px solid",
+                borderColor:oId===o.id?"#3d5c3f":"#e5e7eb",
+                background:oId===o.id?"#f0f4f1":"white",
+                color:"#374151",fontSize:12,cursor:"pointer",fontWeight:oId===o.id?700:400,
+                display:"flex",alignItems:"center",gap:4}}>
+              {o.icon} {o.name}
+              {cnt > 0 && <span style={{background:"#3d5c3f",color:"white",borderRadius:10,padding:"0 5px",fontSize:10}}>{cnt}</span>}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Schubladen-Filter */}
+      {hatSch && (
+        <div style={{background:"white",borderRadius:12,padding:10,marginBottom:12,boxShadow:"0 1px 4px rgba(0,0,0,0.05)"}}>
+          <div style={{display:"flex",alignItems:"center",gap:5,flexWrap:"wrap",marginBottom:6}}>
+            <span style={{fontSize:10,fontWeight:700,color:"#9ca3af"}}>ANZEIGEN:</span>
+            <SchBtn label="Alle" aktiv={filtSch===null} onClick={()=>setFiltSch(null)} n={alleItems.length}/>
+            {Array.from({length:ort.sch},(_,i)=>i+1).map(s=>(
+              <SchBtn key={s} label={`Schublade ${s}`} aktiv={filtSch===s} onClick={()=>setFiltSch(s)} n={alleItems.filter(i=>i.sch===s).length}/>
+            ))}
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:5,flexWrap:"wrap"}}>
+            <span style={{fontSize:10,fontWeight:700,color:"#9ca3af"}}>NEUER ARTIKEL → SCH.:</span>
+            <SchBtn label="–" aktiv={neuSch===null} onClick={()=>setNeuSch(null)} n={0}/>
+            {Array.from({length:ort.sch},(_,i)=>i+1).map(s=>(
+              <SchBtn key={s} label={`${s}`} aktiv={neuSch===s} onClick={()=>setNeuSch(s)} n={0}/>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <EingabeFeld ph={`Artikel für ${ort?.name||""}… (Komma trennt mehrere)`} onOK={hinzufuegen} busy={busy}/>
+
+      {/* Artikelliste */}
+      <div style={{background:"white",borderRadius:14,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+        <div style={{padding:"10px 14px",background:"#f0f4f1",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <span style={{fontWeight:700,fontSize:13}}>{ort?.icon} {ort?.name} <span style={{fontSize:10,color:"#9ca3af"}}>({ort?.info})</span>{filtSch?` · Schublade ${filtSch}`:""}</span>
+          <span style={{fontSize:11,color:"#6b7280"}}>{items.length} Artikel</span>
+        </div>
+        {items.length===0
+          ? <div style={{textAlign:"center",padding:"24px",color:"#9ca3af"}}><div style={{fontSize:28}}>{ort?.icon}</div><p style={{margin:"6px 0 0",fontSize:12}}>Leer – Artikel eingeben!</p></div>
+          : items.map((item,i) => (
+            <div key={item.id} style={{display:"flex",alignItems:"center",padding:"9px 14px",borderBottom:i<items.length-1?"1px solid #f3f4f6":"none",gap:8}}>
+              <div style={{flex:1}}>
+                <span style={{fontSize:14,fontWeight:600}}>{item.name}</span>
+                <span style={{fontSize:12,color:"#6b7280",marginLeft:6}}>{item.qty} {item.unit}</span>
+                {item.sch && <span style={{fontSize:10,color:"#9ca3af",marginLeft:5,background:"#f3f4f6",padding:"1px 5px",borderRadius:6}}>Sch.{item.sch}</span>}
+              </div>
+              <span style={{fontSize:9,color:"#d1d5db"}}>{item.datum}</span>
+              <button onClick={()=>onRemove(oId,item.id)} style={{background:"#fee2e2",border:"none",cursor:"pointer",color:"#dc2626",width:26,height:26,borderRadius:7,fontWeight:700,fontSize:14,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
+            </div>
+          ))
+        }
+      </div>
+
+      {/* Alle Lagerorte Übersicht */}
+      <p style={{fontSize:10,fontWeight:700,color:"#9ca3af",textTransform:"uppercase",margin:"14px 0 8px"}}>Alle Lagerorte</p>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7}}>
+        {ALLE_ORTE.map(o => {
+          const cnt = (bestand[o.id]||[]).length;
+          return (
+            <button key={o.id} onClick={()=>{setBId(o.bId);setOId(o.id);setFiltSch(null);}}
+              style={{background:"white",borderRadius:12,padding:"9px 11px",border:"1.5px solid",
+                borderColor:oId===o.id?"#3d5c3f":"#f3f4f6",cursor:"pointer",textAlign:"left"}}>
+              <div style={{fontSize:16}}>{o.icon}</div>
+              <div style={{fontSize:11,fontWeight:600,color:"#374151",marginTop:2,lineHeight:1.2}}>{o.name}</div>
+              <div style={{fontSize:9,color:"#9ca3af"}}>{o.bName} · {o.info}</div>
+              <div style={{fontSize:10,fontWeight:700,color:cnt?"#3d5c3f":"#d1d5db",marginTop:2}}>{cnt?`${cnt} Artikel`:"leer"}</div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+// ── EINKAUF TAB ───────────────────────────────────────────
+const EinkaufTab = ({einkauf, onAdd, onToggle, onRemove, onShop, onClear}) => {
+  const [gId, setGId] = useState("sm");
+  const [shop, setShop] = useState("Kaufland");
+  const [busy, setBusy] = useState(false);
+  const [filter, setFilter] = useState("Alle");
+
+  const gr = GRUPPEN.find(g=>g.id===gId);
+  const wechsel = id => { setGId(id); const g=GRUPPEN.find(x=>x.id===id); setShop(g?.shops[0]||g?.name||""); };
+  const defShop = () => { const g=GRUPPEN.find(x=>x.id===gId); return g?.shops.length ? shop : (g?.name||""); };
+
+  const hinzufuegen = async txt => {
+    setBusy(true);
+    try {
+      let items;
+      try {
+        items = await claudeCall(
+          [{role:"user",content:txt}],
+          `Extrahiere Einkaufsartikel. Shop aus:${ALLE_SHOPS.join(",")} sonst null. NUR JSON-Array:[{"name":"X","qty":1,"unit":"Stück","shop":null}]`
+        );
+      } catch {
+        items = parseText(txt).map(p=>({...p,shop:null}));
+      }
+      onAdd(items.map(i=>({...i, shop:i.shop||defShop()})));
+    } catch(e) { console.error(e); }
+    setBusy(false);
+  };
+
+  const fotoScan = async f => {
+    setBusy(true);
+    try {
+      const {data,mt} = await zuBase64(f);
+      const items = await claudeCall(
+        [{role:"user",content:[{type:"image",source:{type:"base64",media_type:mt,data}},{type:"text",text:"Einkaufsliste scannen."}]}],
+        `Scanne Einkaufsliste. Shops:${ALLE_SHOPS.join(",")} oder null. NUR JSON-Array:[{"name":"X","qty":1,"unit":"Stück","shop":null}]`
+      );
+      onAdd(items.map(i=>({...i,shop:i.shop||defShop()})));
+    } catch { alert("Foto-Scan benötigt Anthropic API-Key."); }
+    setBusy(false);
+  };
+
+  const done = einkauf.filter(i=>i.erledigt).length;
+  const zeige = filter==="Alle" ? einkauf : einkauf.filter(i=>shopGruppe(i.shop)?.id===filter);
+  
+  // Gruppieren nach Gruppe → Shop
+  const grps = {};
+  zeige.forEach(item => {
+    const g = shopGruppe(item.shop);
+    const gk = g?.id||"x"; const sk = item.shop||"Sonstiges";
+    if(!grps[gk]) grps[gk]={};
+    if(!grps[gk][sk]) grps[gk][sk]=[];
+    grps[gk][sk].push(item);
+  });
+  const belegt = GRUPPEN.filter(g=>einkauf.some(i=>shopGruppe(i.shop)?.id===g.id));
+
+  return (
+    <div>
+      {/* Kategorie + Shop Auswahl */}
+      <div style={{background:"white",borderRadius:14,padding:14,marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+        <p style={{margin:"0 0 6px",fontSize:10,fontWeight:700,color:"#9ca3af",textTransform:"uppercase"}}>Kategorie</p>
+        <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:10}}>
+          {GRUPPEN.map(g => (
+            <button key={g.id} onClick={()=>wechsel(g.id)}
+              style={{padding:"5px 9px",borderRadius:20,border:"2px solid",
+                borderColor:gId===g.id?"#3d5c3f":"#e5e7eb",
+                background:gId===g.id?"#3d5c3f":"white",
+                color:gId===g.id?"white":"#374151",fontSize:12,cursor:"pointer",fontWeight:700}}>
+              {g.icon} {g.name}
+            </button>
+          ))}
+        </div>
+        {gr?.shops.length > 0 && <>
+          <p style={{margin:"0 0 5px",fontSize:10,fontWeight:700,color:"#9ca3af",textTransform:"uppercase"}}>Shop</p>
+          <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:10}}>
+            {gr.shops.map(s => {
+              const f=shopFarbe(s); const a=shop===s;
+              return (
+                <button key={s} onClick={()=>setShop(s)}
+                  style={{padding:"5px 10px",borderRadius:20,border:"2px solid",
+                    borderColor:a?f.bg:"#e5e7eb",background:a?f.bg:"white",
+                    color:a?f.fg:"#374151",fontSize:12,cursor:"pointer",fontWeight:700}}>
+                  {s}
+                </button>
+              );
+            })}
+          </div>
+        </>}
+        <EingabeFeld ph="Artikel eingeben… (Komma = mehrere)" onOK={hinzufuegen} onBild={fotoScan} busy={busy}/>
+      </div>
+
+      {/* Fortschritt */}
+      {einkauf.length > 0 && (
+        <div style={{background:"white",borderRadius:14,padding:12,marginBottom:10,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
+            <span style={{fontSize:13,fontWeight:600}}>{done}/{einkauf.length} erledigt</span>
+            {done>0 && <button onClick={onClear} style={{background:"#fee2e2",border:"none",color:"#dc2626",cursor:"pointer",fontSize:11,padding:"3px 8px",borderRadius:6,fontWeight:600}}>Erledigte löschen</button>}
+          </div>
+          <div style={{height:5,background:"#f3f4f6",borderRadius:3,overflow:"hidden"}}>
+            <div style={{height:"100%",width:`${einkauf.length?(done/einkauf.length)*100:0}%`,background:"linear-gradient(90deg,#3d5c3f,#4a7a4d)",borderRadius:3,transition:"width 0.3s"}}/>
+          </div>
+        </div>
+      )}
+
+      {/* Filter */}
+      {belegt.length > 1 && (
+        <div style={{display:"flex",gap:5,marginBottom:10,flexWrap:"wrap"}}>
+          {["Alle",...belegt.map(g=>g.id)].map(f => {
+            const g = GRUPPEN.find(x=>x.id===f);
+            return <button key={f} onClick={()=>setFilter(f)} style={{padding:"4px 8px",borderRadius:20,border:"2px solid",borderColor:filter===f?"#3d5c3f":"#e5e7eb",background:filter===f?"#3d5c3f":"white",color:filter===f?"white":"#374151",fontSize:11,cursor:"pointer",fontWeight:600}}>{g?`${g.icon} ${g.name}`:"Alle"}</button>;
+          })}
+        </div>
+      )}
+
+      {/* Artikel nach Shop */}
+      {Object.entries(grps).map(([gk, shops]) => {
+        const g = GRUPPEN.find(x=>x.id===gk);
+        return Object.entries(shops).map(([sn, items]) => {
+          const f = shopFarbe(sn); const d = items.filter(i=>i.erledigt).length;
+          return (
+            <div key={`${gk}-${sn}`} style={{background:"white",borderRadius:14,marginBottom:10,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+              <div style={{padding:"9px 14px",background:f.bg,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <span style={{color:f.fg,fontWeight:800,fontSize:13}}>{g?.icon} {sn}</span>
+                <span style={{color:f.fg,fontSize:11,background:"rgba(0,0,0,0.18)",padding:"2px 7px",borderRadius:10}}>{d}/{items.length}</span>
+              </div>
+              {items.map((item,i) => (
+                <div key={item.id} style={{display:"flex",alignItems:"center",padding:"9px 12px",borderBottom:i<items.length-1?"1px solid #f3f4f6":"none",opacity:item.erledigt?0.4:1,gap:8}}>
+                  <input type="checkbox" checked={item.erledigt} onChange={()=>onToggle(item.id)} style={{width:17,height:17,cursor:"pointer",accentColor:"#3d5c3f",flexShrink:0}}/>
+                  <div style={{flex:1,textDecoration:item.erledigt?"line-through":"none"}}>
+                    <span style={{fontSize:14,fontWeight:600}}>{item.name}</span>
+                    <span style={{fontSize:12,color:"#6b7280",marginLeft:6}}>{item.qty} {item.unit}</span>
+                  </div>
+                  <select value={item.shop||""} onChange={e=>onShop(item.id,e.target.value)} style={{fontSize:10,border:"1px solid #e5e7eb",borderRadius:6,padding:"2px",maxWidth:70}}>
+                    {ALLE_SHOPS.map(s=><option key={s} value={s}>{s}</option>)}
+                  </select>
+                  <button onClick={()=>onRemove(item.id)} style={{background:"#fee2e2",border:"none",cursor:"pointer",color:"#dc2626",width:24,height:24,borderRadius:6,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13}}>×</button>
+                </div>
+              ))}
+            </div>
+          );
+        });
+      })}
+
+      {einkauf.length===0 && (
+        <div style={{textAlign:"center",padding:"32px 16px",color:"#9ca3af"}}>
+          <div style={{fontSize:36}}>🛒</div>
+          <p style={{margin:"8px 0 4px",fontSize:14,fontWeight:600}}>Einkaufsliste ist leer</p>
+          <p style={{fontSize:12}}>Kategorie & Shop wählen, dann Artikel eingeben</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ── ÜBERSICHT TAB ─────────────────────────────────────────
+const UebersichtTab = ({bestand, einkauf, kassenbons, todos}) => {
+  const gB = Object.values(bestand).reduce((s,a)=>s+a.length,0);
+  const oE = einkauf.filter(i=>!i.erledigt).length;
+  const oT = todos.filter(t=>!t.erledigt).length;
+  return (
+    <div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
+        {[{i:"📦",l:"Im Bestand",v:gB,c:"#3d5c3f"},{i:"🛒",l:"Einzukaufen",v:oE,c:"#dc2626"},{i:"🧾",l:"Kassenbons",v:kassenbons.length,c:"#6366f1"},{i:"✅",l:"Aufgaben",v:oT,c:"#f97316"}].map((k,i) => (
+          <div key={i} style={{background:"white",borderRadius:14,padding:14,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+            <div style={{fontSize:20}}>{k.i}</div>
+            <div style={{fontSize:26,fontWeight:800,color:k.c,marginTop:2}}>{k.v}</div>
+            <div style={{fontSize:11,color:"#6b7280",marginTop:2}}>{k.l}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{background:"white",borderRadius:14,padding:14,marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+        <h3 style={{margin:"0 0 10px",fontSize:14,fontWeight:800}}>📦 Bestand</h3>
+        {BEREICHE.map(b => {
+          const tot = b.orte.reduce((s,o)=>s+(bestand[o.id]||[]).length,0);
+          return (
+            <div key={b.id} style={{marginBottom:10}}>
+              <div style={{display:"flex",justifyContent:"space-between",fontSize:13,fontWeight:700,padding:"3px 0",borderBottom:"1px solid #f3f4f6",marginBottom:3}}>
+                <span>{b.icon} {b.name}</span><span style={{color:"#3d5c3f"}}>{tot}</span>
+              </div>
+              {b.orte.map(o => {const c=(bestand[o.id]||[]).length;return(
+                <div key={o.id} style={{display:"flex",justifyContent:"space-between",padding:"2px 10px",fontSize:11,color:"#6b7280"}}>
+                  <span>{o.icon} {o.name}</span>
+                  <span style={{fontWeight:c?700:400,color:c?"#374151":"#d1d5db"}}>{c||"—"}</span>
+                </div>
+              );})}
+            </div>
+          );
+        })}
+      </div>
+      <div style={{background:"white",borderRadius:14,padding:14,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+        <h3 style={{margin:"0 0 10px",fontSize:14,fontWeight:800}}>🛒 Einkauf</h3>
+        {GRUPPEN.map(g => {
+          const items = einkauf.filter(i=>shopGruppe(i.shop)?.id===g.id);
+          if (!items.length) return null;
+          const d = items.filter(i=>i.erledigt).length;
+          return (
+            <div key={g.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 0",borderBottom:"1px solid #f3f4f6",fontSize:12}}>
+              <span>{g.icon} {g.name}</span>
+              <div style={{display:"flex",alignItems:"center",gap:7}}>
+                <div style={{height:4,width:50,background:"#f3f4f6",borderRadius:2}}>
+                  <div style={{height:"100%",width:`${(d/items.length)*100}%`,background:g.farbe,borderRadius:2}}/>
+                </div>
+                <span style={{fontWeight:700,color:d===items.length?"#3d5c3f":"#f97316"}}>{d}/{items.length}</span>
+              </div>
+            </div>
+          );
+        })}
+        {!einkauf.length && <p style={{fontSize:12,color:"#9ca3af",margin:0}}>Keine Einkäufe</p>}
+      </div>
+    </div>
+  );
+};
+
+// ── KASSENBON TAB ─────────────────────────────────────────
+const KassenbonTab = ({kassenbons, setKassenbons, onAddEinkauf}) => {
+  const [busy, setBusy] = useState(false);
+  const [akt, setAkt] = useState(null);
+  const ref = useRef();
+  const scan = async e => {
+    const f = e.target.files[0]; if(!f) return;
+    setBusy(true);
+    try {
+      const {data,mt} = await zuBase64(f);
+      const b = await claudeCall(
+        [{role:"user",content:[{type:"image",source:{type:"base64",media_type:mt,data}},{type:"text",text:"Kassenbon auslesen."}]}],
+        `Lies Kassenbon. NUR JSON:{"store":"X","date":"X","total":"X","items":[{"name":"X","qty":1,"price":"X"}]}`
+      );
+      if(b){const n={...b,id:uid(),scanDatum:datum()};setAkt(n);setKassenbons(p=>[n,...p]);}
+    } catch { alert("Kassenbons benötigen Anthropic API-Key (in Einstellungen eintragen)."); }
+    setBusy(false); e.target.value="";
+  };
+  return (
+    <div>
+      <div style={{background:"white",borderRadius:14,padding:16,marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+        <h3 style={{margin:"0 0 10px",fontSize:15,fontWeight:800}}>🧾 Kassenbon einlesen</h3>
+        <button onClick={()=>ref.current?.click()} disabled={busy}
+          style={{width:"100%",padding:"14px",borderRadius:12,border:"2px dashed #3d5c3f",background:"#f0f4f1",fontSize:14,cursor:"pointer",fontWeight:600,color:"#2c3e2d"}}>
+          {busy?"⏳ Wird gelesen…":"📷 Kassenbon hochladen / fotografieren"}
+        </button>
+        <input ref={ref} type="file" accept="image/*" style={{display:"none"}} onChange={scan}/>
+        <p style={{margin:"6px 0 0",fontSize:11,color:"#9ca3af",textAlign:"center"}}>Benötigt Anthropic API-Key</p>
+      </div>
+      {akt && (
+        <div style={{background:"white",borderRadius:14,marginBottom:12,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+          <div style={{padding:"12px 14px",background:"#2c3e2d",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div><div style={{color:"white",fontWeight:800,fontSize:15}}>{akt.store||"?"}</div><div style={{color:"rgba(255,255,255,0.7)",fontSize:11}}>{akt.date||akt.scanDatum} · {akt.total}</div></div>
+            <button onClick={()=>setAkt(null)} style={{background:"rgba(255,255,255,0.15)",border:"none",cursor:"pointer",color:"white",width:28,height:28,borderRadius:8,fontSize:16}}>×</button>
+          </div>
+          <div style={{padding:"6px 14px"}}>
+            {(akt.items||[]).map((item,i)=>(
+              <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:i<akt.items.length-1?"1px solid #f3f4f6":"none",fontSize:13}}>
+                <span>{item.qty>1?`${item.qty}× `:""}{item.name}</span>
+                <span style={{color:"#6b7280",fontWeight:600}}>{item.price}</span>
+              </div>
+            ))}
+          </div>
+          <div style={{padding:"10px 14px",borderTop:"2px solid #f3f4f6"}}>
+            <button onClick={()=>onAddEinkauf((akt.items||[]).map(i=>({name:i.name,qty:i.qty||1,unit:"Stück",shop:akt.store||"Kaufland"})))}
+              style={{width:"100%",padding:"10px",background:"#3d5c3f",color:"white",border:"none",borderRadius:10,cursor:"pointer",fontSize:13,fontWeight:700}}>
+              → Zur Einkaufsliste
+            </button>
+          </div>
+        </div>
+      )}
+      {kassenbons.slice(0,10).map(b=>(
+        <button key={b.id} onClick={()=>setAkt(b)} style={{width:"100%",background:"white",borderRadius:12,padding:"10px 14px",marginBottom:8,border:"1.5px solid",borderColor:akt?.id===b.id?"#3d5c3f":"#f3f4f6",cursor:"pointer",textAlign:"left",boxShadow:"0 1px 4px rgba(0,0,0,0.05)"}}>
+          <div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontWeight:700,fontSize:13}}>{b.store||"?"}</span><span style={{color:"#3d5c3f",fontWeight:800}}>{b.total}</span></div>
+          <div style={{fontSize:11,color:"#9ca3af"}}>{b.scanDatum} · {(b.items||[]).length} Artikel</div>
+        </button>
+      ))}
+      {!kassenbons.length&&!busy&&<div style={{textAlign:"center",padding:"32px",color:"#9ca3af"}}><div style={{fontSize:36}}>🧾</div><p style={{margin:"8px 0 0",fontSize:14,fontWeight:600}}>Keine Kassenbons</p></div>}
+    </div>
+  );
+};
+
+// ── AUFGABEN TAB ──────────────────────────────────────────
+const AufgabenTab = ({todos, onAdd, onToggle, onRemove}) => {
+  const [txt, setTxt] = useState("");
+  const [prio, setPrio] = useState("normal");
+  const PRIOS = [{id:"hoch",l:"🔴 Hoch",c:"#dc2626"},{id:"mittel",l:"🟡 Mittel",c:"#f59e0b"},{id:"normal",l:"🟢 Normal",c:"#3d5c3f"}];
+  const sorted = [...todos].sort((a,b)=>{const o={hoch:0,mittel:1,normal:2};if(a.erledigt!==b.erledigt)return a.erledigt?1:-1;return(o[a.prioritaet]||2)-(o[b.prioritaet]||2);});
+  const add = () => {if(!txt.trim())return;onAdd(txt.trim(),prio);setTxt("");};
+  return (
+    <div>
+      <div style={{background:"white",borderRadius:14,padding:14,marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+        <p style={{margin:"0 0 6px",fontSize:10,fontWeight:700,color:"#9ca3af",textTransform:"uppercase"}}>Priorität</p>
+        <div style={{display:"flex",gap:6,marginBottom:10}}>
+          {PRIOS.map(p=>(
+            <button key={p.id} onClick={()=>setPrio(p.id)}
+              style={{flex:1,padding:"7px 4px",borderRadius:10,border:"2px solid",borderColor:prio===p.id?p.c:"#e5e7eb",background:prio===p.id?p.c+"18":"white",color:prio===p.id?p.c:"#374151",fontSize:12,cursor:"pointer",fontWeight:700}}>
+              {p.l}
+            </button>
+          ))}
+        </div>
+        <div style={{display:"flex",gap:8}}>
+          <input value={txt} onChange={e=>setTxt(e.target.value)} onKeyDown={e=>e.key==="Enter"&&add()} placeholder="Neue Aufgabe…"
+            style={{flex:1,padding:"10px 12px",borderRadius:10,border:"1.5px solid #e5e7eb",fontSize:14,outline:"none",background:"#fafafa"}}/>
+          <Btn onClick={add} disabled={!txt.trim()}>+</Btn>
+        </div>
+      </div>
+      {todos.length>0&&(
+        <div style={{display:"flex",gap:8,marginBottom:12}}>
+          {[{v:todos.filter(t=>!t.erledigt).length,l:"Offen",c:"#f97316"},{v:todos.filter(t=>t.erledigt).length,l:"Erledigt",c:"#3d5c3f"}].map((s,i)=>(
+            <div key={i} style={{flex:1,background:"white",borderRadius:10,padding:"10px",textAlign:"center",boxShadow:"0 1px 4px rgba(0,0,0,0.05)"}}>
+              <div style={{fontSize:22,fontWeight:800,color:s.c}}>{s.v}</div>
+              <div style={{fontSize:10,color:"#9ca3af"}}>{s.l}</div>
+            </div>
+          ))}
+        </div>
+      )}
+      <div style={{background:"white",borderRadius:14,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+        {!sorted.length
+          ?<div style={{textAlign:"center",padding:"32px",color:"#9ca3af"}}><div style={{fontSize:36}}>✅</div><p style={{margin:"8px 0 0",fontSize:14,fontWeight:600}}>Keine Aufgaben</p></div>
+          :sorted.map((t,i)=>{const p=PRIOS.find(x=>x.id===t.prioritaet)||PRIOS[2];return(
+            <div key={t.id} style={{display:"flex",alignItems:"center",padding:"10px 14px",borderBottom:i<sorted.length-1?"1px solid #f3f4f6":"none",opacity:t.erledigt?0.4:1,gap:10}}>
+              <input type="checkbox" checked={t.erledigt} onChange={()=>onToggle(t.id)} style={{width:18,height:18,cursor:"pointer",accentColor:p.c,flexShrink:0}}/>
+              <div style={{flex:1}}>
+                <span style={{fontSize:14,fontWeight:600,textDecoration:t.erledigt?"line-through":"none"}}>{t.text}</span>
+                <div style={{fontSize:10,color:p.c,fontWeight:700,marginTop:1}}>{p.l}</div>
+              </div>
+              <span style={{fontSize:9,color:"#d1d5db"}}>{t.datum}</span>
+              <button onClick={()=>onRemove(t.id)} style={{background:"#fee2e2",border:"none",cursor:"pointer",color:"#dc2626",width:24,height:24,borderRadius:6,fontWeight:700,fontSize:13,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
+            </div>
+          );})}
+      </div>
+    </div>
+  );
+};
+
+// ── HAUPT APP ─────────────────────────────────────────────
+const App = () => {
+  const [aktiv, setAktiv] = useState(!!lsGet("hm_fb"));
+  const [tab, setTab] = useState("bestand");
+  const [bestand, setBestand] = useState({});
+  const [einkauf, setEinkauf] = useState([]);
+  const [kassenbons, setKassenbons] = useState([]);
+  const [todos, setTodos] = useState([]);
+  const [geladen, setGeladen] = useState(false);
+  const [sync, setSync] = useState("idle");
+  const writing = useRef(false);
+
+  const laden = useCallback(async (still=false) => {
+    const fb = lsGet("hm_fb"); if(!fb) return;
+    if(!still) setSync("syncing");
+    try {
+      const [b,e,k,t] = await Promise.all([fbLesen("bestand"),fbLesen("einkauf"),fbLesen("kassenbons"),fbLesen("todos")]);
+      if(b && typeof b==="object") setBestand(b);
+      if(e) setEinkauf(Array.isArray(e)?e:Object.values(e));
+      if(k) setKassenbons(Array.isArray(k)?k:Object.values(k));
+      if(t) setTodos(Array.isArray(t)?t:Object.values(t));
+      setSync("ok");
+    } catch { setSync("err"); }
+    setGeladen(true);
+  }, []);
+
+  useEffect(() => { if(aktiv) laden(); }, [aktiv]);
+  useEffect(() => {
+    if(!aktiv) return;
+    const iv = setInterval(() => { if(!writing.current) laden(true); }, 8000);
+    return () => clearInterval(iv);
+  }, [aktiv, laden]);
+
+  const speichern = useCallback(async (path, data) => {
+    writing.current=true; setSync("syncing");
+    await fbSchreiben(path, data);
+    setSync("ok"); writing.current=false;
+  }, []);
+
+  const addBestand = (id,items) => setBestand(p=>{const n={...p,[id]:[...(p[id]||[]),...items.map(i=>({...i,id:uid(),datum:datum()}))]};speichern("bestand",n);return n;});
+  const remBestand = (id,iid) => setBestand(p=>{const n={...p,[id]:(p[id]||[]).filter(i=>i.id!==iid)};speichern("bestand",n);return n;});
+  const addEinkauf = items => setEinkauf(p=>{const n=[...p,...items.map(i=>({...i,id:uid(),erledigt:false,datum:datum()}))];speichern("einkauf",n);return n;});
+  const togEinkauf = id => setEinkauf(p=>{const n=p.map(i=>i.id===id?{...i,erledigt:!i.erledigt}:i);speichern("einkauf",n);return n;});
+  const remEinkauf = id => setEinkauf(p=>{const n=p.filter(i=>i.id!==id);speichern("einkauf",n);return n;});
+  const shopEinkauf = (id,s) => setEinkauf(p=>{const n=p.map(i=>i.id===id?{...i,shop:s}:i);speichern("einkauf",n);return n;});
+  const clearEinkauf = () => setEinkauf(p=>{const n=p.filter(i=>!i.erledigt);speichern("einkauf",n);return n;});
+  const addTodo = (txt,pr) => setTodos(p=>{const n=[{id:uid(),text:txt,prioritaet:pr,erledigt:false,datum:datum()},...p];speichern("todos",n);return n;});
+  const togTodo = id => setTodos(p=>{const n=p.map(t=>t.id===id?{...t,erledigt:!t.erledigt}:t);speichern("todos",n);return n;});
+  const remTodo = id => setTodos(p=>{const n=p.filter(t=>t.id!==id);speichern("todos",n);return n;});
+  const setKFn = fn => setKassenbons(p=>{const n=typeof fn==="function"?fn(p):fn;speichern("kassenbons",n);return n;});
+
+  if(!aktiv) return <Einrichtung onStart={()=>setAktiv(true)}/>;
+
+  if(!geladen) return (
+    <div style={{maxWidth:500,margin:"0 auto",minHeight:"100vh",background:"#f5f5f0",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:12,color:"#6b7280"}}>
+      <span style={{fontSize:36,animation:"spin 1s linear infinite",display:"inline-block"}}>🔄</span>
+      <p style={{margin:0,fontSize:14,fontWeight:600}}>Lade Daten…</p>
+    </div>
+  );
+
+  const gB = Object.values(bestand).reduce((s,a)=>s+a.length,0);
+  const oE = einkauf.filter(i=>!i.erledigt).length;
+  const oT = todos.filter(t=>!t.erledigt).length;
+  const TABS = [{id:"bestand",l:"Bestand",i:"📦"},{id:"einkauf",l:"Einkauf",i:"🛒"},{id:"uebersicht",l:"Übersicht",i:"📊"},{id:"kassenbon",l:"Kassenbon",i:"🧾"},{id:"aufgaben",l:"Aufgaben",i:"✅"}];
+  const sC = sync==="ok"?"#4ade80":sync==="err"?"#f87171":"#fbbf24";
+
+  return (
+    <div style={{fontFamily:"'Segoe UI',system-ui,sans-serif",maxWidth:500,margin:"0 auto",minHeight:"100vh",background:"#f5f5f0",paddingBottom:72}}>
+      <div style={{background:"linear-gradient(135deg,#2c3e2d,#3d5c3f)",padding:"14px 18px 10px",color:"white"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+          <h1 style={{margin:0,fontSize:19,fontWeight:800}}>🏠 Haushalt Manager</h1>
+          <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:3}}>
+            <span style={{fontSize:10,background:"rgba(255,255,255,0.15)",padding:"3px 7px",borderRadius:10,display:"flex",alignItems:"center",gap:3}}>
+              <span style={{width:6,height:6,borderRadius:"50%",background:sC,display:"inline-block"}}/>
+              {sync==="ok"?"Sync ✓":sync==="err"?"❌ Fehler":"⏳"}
+            </span>
+            <button onClick={()=>{lsDel("hm_fb");setAktiv(false);setGeladen(false);}}
+              style={{fontSize:9,background:"rgba(255,255,255,0.1)",border:"none",color:"rgba(255,255,255,0.7)",padding:"2px 6px",borderRadius:5,cursor:"pointer"}}>
+              ⚙️ Einstellungen
+            </button>
+          </div>
+        </div>
+        <div style={{display:"flex",gap:12,marginTop:7,fontSize:11,opacity:0.85}}>
+          <span>📦 {gB}</span><span>🛒 {oE} offen</span><span>✅ {oT} Aufgaben</span>
+        </div>
+      </div>
+
+      <div style={{padding:12}}>
+        {tab==="bestand"    && <BestandTab bestand={bestand} onAdd={addBestand} onRemove={remBestand}/>}
+        {tab==="einkauf"    && <EinkaufTab einkauf={einkauf} onAdd={addEinkauf} onToggle={togEinkauf} onRemove={remEinkauf} onShop={shopEinkauf} onClear={clearEinkauf}/>}
+        {tab==="uebersicht" && <UebersichtTab bestand={bestand} einkauf={einkauf} kassenbons={kassenbons} todos={todos}/>}
+        {tab==="kassenbon"  && <KassenbonTab kassenbons={kassenbons} setKassenbons={setKFn} onAddEinkauf={addEinkauf}/>}
+        {tab==="aufgaben"   && <AufgabenTab todos={todos} onAdd={addTodo} onToggle={togTodo} onRemove={remTodo}/>}
+      </div>
+
+      <nav style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:500,background:"white",borderTop:"1px solid #e5e7eb",display:"flex",boxShadow:"0 -2px 10px rgba(0,0,0,0.08)",zIndex:100}}>
+        {TABS.map(t=>{
+          const badge = t.id==="einkauf"?oE : t.id==="aufgaben"?oT : 0;
+          const a = tab===t.id;
+          return (
+            <button key={t.id} onClick={()=>setTab(t.id)}
+              style={{flex:1,padding:"10px 2px 8px",border:"none",background:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:1,position:"relative"}}>
+              <span style={{fontSize:18}}>{t.i}</span>
+              <span style={{fontSize:9,fontWeight:a?700:400,color:a?"#3d5c3f":"#9ca3af"}}>{t.l}</span>
+              {badge>0&&<span style={{position:"absolute",top:5,right:"calc(50% - 15px)",background:"#dc2626",color:"white",fontSize:9,fontWeight:700,borderRadius:"50%",width:15,height:15,display:"flex",alignItems:"center",justifyContent:"center"}}>{badge>9?"9+":badge}</span>}
+              {a&&<div style={{position:"absolute",bottom:0,left:"15%",right:"15%",height:2,background:"#3d5c3f",borderRadius:2}}/>}
+            </button>
+          );
+        })}
+      </nav>
+    </div>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
