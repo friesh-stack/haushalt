@@ -15,8 +15,8 @@
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Segoe UI',system-ui,sans-serif;background:#f5f5f0;}
-input,button,select{font-family:inherit;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#f5f5f0;font-size:16px;}
+input,button,select{font-family:inherit;font-size:16px;}
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 </style>
 </head>
@@ -25,26 +25,31 @@ input,button,select{font-family:inherit;}
 <script type="text/babel">
 const {useState,useEffect,useRef,useCallback} = React;
 
-// ── Lagerorte ─────────────────────────────────────────────
+// ── Lagerorte mit Nummerierungssystem ─────────────────────
+// Schubladen: Nr. des Orts + Fach-Nr. (z.B. Ort 1 → 11,12,13,14)
+function makeFaecher(ortNr, anzahl) {
+  return Array.from({length:anzahl}, (_,i) => ortNr*10 + (i+1));
+}
+
 const BEREICHE = [
-  {id:"vr", name:"Vorratsraum", icon:"🏠", orte:[
-    {id:"vr1", name:"Samsung Gefrierschrank", icon:"🧊", info:"links",  sch:5},
-    {id:"vr2", name:"Kühlschrank",            icon:"🥶", info:"rechts", sch:5},
-    {id:"vr3", name:"Gefrierschrank",          icon:"❄️", info:"rechts", sch:5},
-  ]},
   {id:"ku", name:"Küche", icon:"🍳", orte:[
-    {id:"ku1", name:"Gefrierschrank", icon:"🧊", info:"Küche", sch:4},
-    {id:"ku2", name:"Kühlschrank",    icon:"🥶", info:"Küche", sch:5},
-    {id:"ku3", name:"Vorratsschrank", icon:"🏺", info:"Mehl · Gewürze · Öle", sch:0},
-    {id:"ku4", name:"Gemüse-Ablage",  icon:"🥦", info:"Küche", sch:0},
+    {id:"ku1", name:"Gefrierschrank",  icon:"🧊", info:"Nr. 1 · Küche", nr:1, faecher:makeFaecher(1,4)},
+    {id:"ku2", name:"Kühlschrank",     icon:"🥶", info:"Nr. 2 · Küche", nr:2, faecher:makeFaecher(2,5)},
+    {id:"ku3", name:"Vorratsschrank",  icon:"🏺", info:"Mehl · Gewürze · Öle", nr:null, faecher:[]},
+    {id:"ku4", name:"Gemüse-Ablage",   icon:"🥦", info:"Küche", nr:null, faecher:[]},
+  ]},
+  {id:"vr", name:"Vorratsraum", icon:"🏠", orte:[
+    {id:"vr1", name:"Samsung Gefrierschrank", icon:"🧊", info:"Nr. 3 · links",  nr:3, faecher:makeFaecher(3,5)},
+    {id:"vr2", name:"Gefrierschrank",          icon:"❄️", info:"Nr. 4 · rechts", nr:4, faecher:makeFaecher(4,5)},
+    {id:"vr3", name:"Kühlschrank",             icon:"🥶", info:"Nr. 5 · rechts", nr:5, faecher:makeFaecher(5,5)},
   ]},
   {id:"ke", name:"Keller", icon:"⬇️", orte:[
-    {id:"ke1", name:"Gefrierschrank",      icon:"🧊", info:"rechts", sch:5},
-    {id:"ke2", name:"Flaschenkühlschrank", icon:"🍾", info:"links",  sch:4},
-    {id:"ke3", name:"Wasserflaschen",      icon:"💧", info:"Keller", sch:0},
-    {id:"ke4", name:"Weinflaschen",        icon:"🍷", info:"Keller", sch:0},
-    {id:"ke5", name:"Sektflaschen",        icon:"🥂", info:"Keller", sch:0},
-    {id:"ke6", name:"Gemüse & Obst",       icon:"🥔", info:"Kartoffeln · Obst · Rüben", sch:0},
+    {id:"ke2", name:"Flaschenkühlschrank", icon:"🍾", info:"Nr. 6 · links",  nr:6, faecher:makeFaecher(6,4)},
+    {id:"ke1", name:"Gefrierschrank",      icon:"🧊", info:"Nr. 7 · rechts", nr:7, faecher:makeFaecher(7,5)},
+    {id:"ke3", name:"Wasserflaschen",      icon:"💧", info:"Keller", nr:null, faecher:[]},
+    {id:"ke4", name:"Weinflaschen",        icon:"🍷", info:"Keller", nr:null, faecher:[]},
+    {id:"ke5", name:"Sektflaschen",        icon:"🥂", info:"Keller", nr:null, faecher:[]},
+    {id:"ke6", name:"Gemüse & Obst",       icon:"🥔", info:"Kartoffeln · Obst · Rüben", nr:null, faecher:[]},
   ]},
 ];
 const ALLE_ORTE = BEREICHE.flatMap(b => b.orte.map(o => ({...o, bName:b.name, bId:b.id})));
@@ -142,31 +147,39 @@ const useSprache = cb => {
   const ref = useRef();
   const [an, setAn] = useState(false);
   const [vorschau, setVorschau] = useState("");
+  const accumulated = useRef("");
   const start = () => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) { alert("Spracherkennung nicht verfügbar"); return; }
+    accumulated.current = "";
     const r = new SR();
     r.lang="de-DE";
     r.continuous=true;
     r.interimResults=true;
     r.onstart=()=>setAn(true);
-    r.onend=()=>{ setAn(false); setVorschau(""); };
-    r.onerror=()=>{ setAn(false); setVorschau(""); };
+    r.onend=()=>{
+      const txt = accumulated.current.trim();
+      if(txt){ cb(txt); accumulated.current=""; }
+      setAn(false); setVorschau("");
+    };
+    r.onerror=e=>{
+      if(e.error!=="no-speech"){
+        const txt = accumulated.current.trim();
+        if(txt){ cb(txt); accumulated.current=""; }
+        setAn(false); setVorschau("");
+      }
+    };
     r.onresult=e=>{
-      let interim=""; let final="";
+      let interim="";
       for(let i=e.resultIndex;i<e.results.length;i++){
-        if(e.results[i].isFinal) final+=e.results[i][0].transcript+" ";
+        if(e.results[i].isFinal) accumulated.current+=e.results[i][0].transcript+" ";
         else interim+=e.results[i][0].transcript;
       }
-      if(interim) setVorschau(interim);
-      if(final.trim()) { setVorschau(""); cb(final.trim()); }
+      setVorschau((accumulated.current+interim).trim());
     };
     ref.current=r; r.start();
   };
-  const stop = () => {
-    if(ref.current){ ref.current.stop(); }
-    setAn(false); setVorschau("");
-  };
+  const stop = () => { if(ref.current){ ref.current.stop(); } };
   return {an, start, stop, vorschau};
 };
 const zuBase64 = f => new Promise((ok,err) => {
@@ -281,7 +294,7 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
 
   const bereich = BEREICHE.find(b=>b.id===bId);
   const ort = ALLE_ORTE.find(o=>o.id===oId);
-  const hatSch = (ort?.sch||0) > 0;
+  const hatSch = (ort?.faecher||[]).length > 0;
   const alleItems = bestand[oId] || [];
   const itemsRaw = filtSch===null ? alleItems : alleItems.filter(i=>i.sch===filtSch);
   const items = sortAZ ? [...itemsRaw].sort((a,b)=>a.name.localeCompare(b.name,"de")) : itemsRaw;
@@ -290,16 +303,31 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
     setBusy(true);
     try {
       let parsed;
+      const fachHinweis = hatSch ? ` Schubladennummer aus Liste ${JSON.stringify(ort.faecher||[])} falls erwähnt als "sch", sonst null.` : "";
       try {
         parsed = await claudeCall(
           [{role:"user",content:txt}],
-          `Extrahiere Lebensmittel für "${ort?.name}".${hatSch?' Schublade als "sch" (Zahl 1-'+ort.sch+') falls erwähnt, sonst null.':''} NUR JSON-Array:[{"name":"X","qty":1,"unit":"Stück","sch":null}]`
+          `Extrahiere Lebensmittel für "${ort?.name}".${fachHinweis} NUR JSON-Array:[{"name":"X","qty":1,"unit":"Stück","sch":null}]`
         );
       } catch {
         parsed = parseText(txt).map(p=>({...p, sch:null}));
       }
-      onAdd(oId, parsed.map(x=>({...x, sch: neuSch ?? x.sch ?? null})));
+      onAdd(oId, parsed.map(x=>({...x, sch: neuSch !== null ? neuSch : (x.sch ?? null)})));
     } catch(e) { console.error(e); }
+    setBusy(false);
+  };
+
+  const fotoScanBestand = async f => {
+    setBusy(true);
+    try {
+      const {data,mt} = await zuBase64(f);
+      const fachHinweis = hatSch ? ` Schubladennummer aus ${JSON.stringify(ort.faecher||[])} als "sch" falls erkennbar, sonst null.` : "";
+      const parsed = await claudeCall(
+        [{role:"user",content:[{type:"image",source:{type:"base64",media_type:mt,data}},{type:"text",text:"Lebensmittel und Artikel aus dem Bild oder handschriftlichen Notizen extrahieren."}]}],
+        `Extrahiere alle sichtbaren Lebensmittel/Artikel.${fachHinweis} NUR JSON-Array:[{"name":"X","qty":1,"unit":"Stück","sch":null}]`
+      );
+      onAdd(oId, parsed.map(x=>({...x, sch: neuSch !== null ? neuSch : (x.sch ?? null)})));
+    } catch { alert("Foto-Erkennung benötigt Anthropic API-Key (in ⚙️ Einstellungen eintragen)."); }
     setBusy(false);
   };
 
@@ -329,8 +357,9 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
                 background:oId===o.id?"#f0f4f1":"white",
                 color:"#374151",fontSize:12,cursor:"pointer",fontWeight:oId===o.id?700:400,
                 display:"flex",alignItems:"center",gap:4}}>
+              {o.nr && <span style={{background:"#3d5c3f",color:"white",borderRadius:"50%",width:18,height:18,display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,flexShrink:0}}>{o.nr}</span>}
               {o.icon} {o.name}
-              {cnt > 0 && <span style={{background:"#3d5c3f",color:"white",borderRadius:10,padding:"0 5px",fontSize:10}}>{cnt}</span>}
+              {cnt > 0 && <span style={{background:"#555",color:"white",borderRadius:10,padding:"0 5px",fontSize:10}}>{cnt}</span>}
             </button>
           );
         })}
@@ -342,26 +371,26 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
           <div style={{display:"flex",alignItems:"center",gap:5,flexWrap:"wrap",marginBottom:6}}>
             <span style={{fontSize:10,fontWeight:700,color:"#9ca3af"}}>ANZEIGEN:</span>
             <SchBtn label="Alle" aktiv={filtSch===null} onClick={()=>setFiltSch(null)} n={alleItems.length}/>
-            {Array.from({length:ort.sch},(_,i)=>i+1).map(s=>(
-              <SchBtn key={s} label={`Schublade ${s}`} aktiv={filtSch===s} onClick={()=>setFiltSch(s)} n={alleItems.filter(i=>i.sch===s).length}/>
+            {(ort.faecher||[]).map(s=>(
+              <SchBtn key={s} label={`Nr. ${s}`} aktiv={filtSch===s} onClick={()=>setFiltSch(s)} n={alleItems.filter(i=>i.sch===s).length}/>
             ))}
           </div>
           <div style={{display:"flex",alignItems:"center",gap:5,flexWrap:"wrap"}}>
             <span style={{fontSize:10,fontWeight:700,color:"#9ca3af"}}>NEUER ARTIKEL → SCH.:</span>
             <SchBtn label="–" aktiv={neuSch===null} onClick={()=>setNeuSch(null)} n={0}/>
-            {Array.from({length:ort.sch},(_,i)=>i+1).map(s=>(
+            {(ort.faecher||[]).map(s=>(
               <SchBtn key={s} label={`${s}`} aktiv={neuSch===s} onClick={()=>setNeuSch(s)} n={0}/>
             ))}
           </div>
         </div>
       )}
 
-      <EingabeFeld ph={`Artikel für ${ort?.name||""}… (Komma trennt mehrere)`} onOK={hinzufuegen} busy={busy}/>
+      <EingabeFeld ph={`Artikel für ${ort?.name||""}… (Komma trennt mehrere)`} onOK={hinzufuegen} onBild={fotoScanBestand} busy={busy}/>
 
       {/* Artikelliste */}
       <div style={{background:"white",borderRadius:14,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
         <div style={{padding:"10px 14px",background:"#f0f4f1",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <span style={{fontWeight:700,fontSize:13}}>{ort?.icon} {ort?.name} <span style={{fontSize:10,color:"#9ca3af"}}>({ort?.info})</span>{filtSch?` · Schublade ${filtSch}`:""}</span>
+          <span style={{fontWeight:700,fontSize:14}}>{ort?.icon} {ort?.nr ? `[${ort.nr}] ` : ""}{ort?.name} <span style={{fontSize:11,color:"#9ca3af"}}>({ort?.info})</span>{filtSch?` · #${filtSch}`:""}</span>
           <div style={{display:"flex",alignItems:"center",gap:6}}>
             <button onClick={()=>setSortAZ(s=>!s)} style={{background:sortAZ?"#3d5c3f":"#e5e7eb",color:sortAZ?"white":"#374151",border:"none",borderRadius:6,padding:"2px 7px",fontSize:11,cursor:"pointer",fontWeight:600}}>{sortAZ?"✓ A→Z":"A→Z"}</button>
             <span style={{fontSize:11,color:"#6b7280"}}>{items.length}</span>
@@ -372,9 +401,9 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
           : items.map((item,i) => (
             <div key={item.id} style={{display:"flex",alignItems:"center",padding:"9px 14px",borderBottom:i<items.length-1?"1px solid #f3f4f6":"none",gap:8}}>
               <div style={{flex:1}}>
-                <span style={{fontSize:14,fontWeight:600}}>{item.name}</span>
-                <span style={{fontSize:12,color:"#6b7280",marginLeft:6}}>{item.qty} {item.unit}</span>
-                {item.sch && <span style={{fontSize:10,color:"#9ca3af",marginLeft:5,background:"#f3f4f6",padding:"1px 5px",borderRadius:6}}>Sch.{item.sch}</span>}
+                <span style={{fontSize:16,fontWeight:700}}>{item.name}</span>
+                <span style={{fontSize:14,color:"#6b7280",marginLeft:6}}>{item.qty} {item.unit}</span>
+                {item.sch && <span style={{fontSize:12,color:"#3d5c3f",marginLeft:5,background:"#e8f3e8",padding:"2px 7px",borderRadius:6,fontWeight:600}}>#{item.sch}</span>}
               </div>
               <span style={{fontSize:9,color:"#d1d5db"}}>{item.datum}</span>
               <button onClick={()=>onRemove(oId,item.id)} style={{background:"#fee2e2",border:"none",cursor:"pointer",color:"#dc2626",width:26,height:26,borderRadius:7,fontWeight:700,fontSize:14,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
@@ -396,9 +425,9 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
                 :sortiert.map((item,i)=>(
                   <div key={item.id+item.ort.id} style={{display:"flex",alignItems:"center",padding:"8px 14px",borderBottom:i<sortiert.length-1?"1px solid #f3f4f6":"none",gap:8}}>
                     <div style={{flex:1}}>
-                      <span style={{fontSize:13,fontWeight:700}}>{item.name}</span>
-                      <span style={{fontSize:11,color:"#6b7280",marginLeft:6}}>{item.qty} {item.unit}</span>
-                      {item.sch&&<span style={{fontSize:10,color:"#9ca3af",marginLeft:4,background:"#f3f4f6",padding:"1px 4px",borderRadius:5}}>Sch.{item.sch}</span>}
+                      <span style={{fontSize:15,fontWeight:700}}>{item.name}</span>
+                      <span style={{fontSize:13,color:"#6b7280",marginLeft:6}}>{item.qty} {item.unit}</span>
+                      {item.sch&&<span style={{fontSize:12,color:"#3d5c3f",marginLeft:5,background:"#e8f3e8",padding:"1px 6px",borderRadius:5,fontWeight:600}}>#{item.sch}</span>}
                     </div>
                     <div style={{textAlign:"right",flexShrink:0}}>
                       <div style={{fontSize:11,fontWeight:600,color:"#3d5c3f"}}>{item.ort.icon} {item.ort.name}</div>
@@ -422,8 +451,8 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
               style={{background:"white",borderRadius:12,padding:"9px 11px",border:"1.5px solid",
                 borderColor:oId===o.id?"#3d5c3f":"#f3f4f6",cursor:"pointer",textAlign:"left"}}>
               <div style={{fontSize:16}}>{o.icon}</div>
-              <div style={{fontSize:11,fontWeight:600,color:"#374151",marginTop:2,lineHeight:1.2}}>{o.name}</div>
-              <div style={{fontSize:9,color:"#9ca3af"}}>{o.bName} · {o.info}</div>
+              <div style={{fontSize:12,fontWeight:700,color:"#374151",marginTop:2,lineHeight:1.2}}>{o.nr ? <span style={{color:"#3d5c3f",marginRight:3}}>[{o.nr}]</span> : null}{o.name}</div>
+              <div style={{fontSize:10,color:"#9ca3af"}}>{o.bName}</div>
               <div style={{fontSize:10,fontWeight:700,color:cnt?"#3d5c3f":"#d1d5db",marginTop:2}}>{cnt?`${cnt} Artikel`:"leer"}</div>
             </button>
           );
@@ -561,9 +590,9 @@ const EinkaufTab = ({einkauf, onAdd, onToggle, onRemove, onShop, onClear}) => {
                 <div key={item.id} style={{display:"flex",alignItems:"center",padding:"9px 12px",borderBottom:i<items.length-1?"1px solid #f3f4f6":"none",opacity:item.erledigt?0.4:1,gap:8}}>
                   <input type="checkbox" checked={item.erledigt} onChange={()=>onToggle(item.id)} style={{width:17,height:17,cursor:"pointer",accentColor:"#3d5c3f",flexShrink:0}}/>
                   <div style={{flex:1,textDecoration:item.erledigt?"line-through":"none"}}>
-                    <span style={{fontSize:14,fontWeight:600}}>{item.name}</span>
-                    <span style={{fontSize:12,color:"#6b7280",marginLeft:6}}>{item.qty} {item.unit}</span>
-                    {item.datum && <span style={{fontSize:10,color:"#d1d5db",marginLeft:5}}>📅 {item.datum}</span>}
+                    <span style={{fontSize:16,fontWeight:700}}>{item.name}</span>
+                    <span style={{fontSize:13,color:"#6b7280",marginLeft:6}}>{item.qty} {item.unit}</span>
+                    {item.datum && <span style={{fontSize:11,color:"#d1d5db",marginLeft:5}}>📅 {item.datum}</span>}
                   </div>
                   <select value={item.shop||""} onChange={e=>onShop(item.id,e.target.value)} style={{fontSize:10,border:"1px solid #e5e7eb",borderRadius:6,padding:"2px",maxWidth:70}}>
                     {ALLE_SHOPS.map(s=><option key={s} value={s}>{s}</option>)}
