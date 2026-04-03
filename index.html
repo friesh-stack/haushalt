@@ -108,7 +108,7 @@ async function claudeCall(messages, system) {
       "anthropic-version": "2023-06-01",
       "anthropic-dangerous-direct-browser-access": "true"
     },
-    body: JSON.stringify({model:"claude-haiku-4-5-20251001", max_tokens:1000, system, messages})
+    body: JSON.stringify({model:"claude-haiku-4-5-20251001", max_tokens:2000, system, messages})
   });
   if (!r.ok) {
     const err = await r.json().catch(()=>({}));
@@ -354,16 +354,21 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
     setBusy(true);
     try {
       let parsed;
-      const fachHinweis = hatSch ? ` Schubladennummer aus Liste ${JSON.stringify(ort.faecher||[])} falls erwähnt als "sch", sonst null.` : "";
+      const fachListe = ort?.faecher || [];
+      const fachHinweis = hatSch && fachListe.length
+        ? ` Wenn eine Zahl aus dieser Liste ${JSON.stringify(fachListe)} erwähnt wird, trage sie als "sch" ein, sonst null.`
+        : "";
       try {
         parsed = await claudeCall(
           [{role:"user",content:txt}],
-          `Extrahiere Lebensmittel für "${ort?.name}".${fachHinweis} NUR JSON-Array:[{"name":"X","qty":1,"unit":"Stück","sch":null}]`
+          `Extrahiere ALLE Lebensmittel für "${ort?.name}". Jeder Artikel als eigener Eintrag.${fachHinweis} NUR JSON-Array:[{"name":"X","qty":1,"unit":"Stück","sch":null}] Nur JSON, kein Text davor oder danach.`
         );
       } catch {
         parsed = parseText(txt).map(p=>({...p, sch:null}));
       }
-      onAdd(oId, parsed.map(x=>({...x, sch: neuSch !== null ? neuSch : (x.sch ?? null)})));
+      if(parsed && parsed.length) {
+        onAdd(oId, parsed.map(x=>({...x, sch: neuSch !== null ? neuSch : (x.sch ?? null)})));
+      }
     } catch(e) { console.error(e); }
     setBusy(false);
   };
@@ -374,13 +379,14 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
       const {data,mt} = await zuBase64(f);
       const fachHinweis = hatSch ? ` Schubladennummer aus ${JSON.stringify(ort.faecher||[])} als "sch" falls erkennbar, sonst null.` : "";
       const parsed = await claudeCall(
-        [{role:"user",content:[{type:"image",source:{type:"base64",media_type:mt,data}},{type:"text",text:"Lebensmittel und Artikel aus dem Bild oder handschriftlichen Notizen extrahieren."}]}],
-        `Extrahiere alle sichtbaren Lebensmittel/Artikel.${fachHinweis} NUR JSON-Array:[{"name":"X","qty":1,"unit":"Stück","sch":null}]`
+        [{role:"user",content:[{type:"image",source:{type:"base64",media_type:mt,data}},{type:"text",text:"Bitte lies ALLE Artikel/Lebensmittel aus diesem Bild oder handschriftlichen Zettel. Lies jeden einzelnen Eintrag sorgfältig, auch schwer lesbare Handschrift. Gib alle Artikel zurück, auch wenn die Handschrift unklar ist."}]}],
+        `Extrahiere ALLE sichtbaren Lebensmittel und Artikel vollständig. Auch bei unlesbarer Handschrift: rate den wahrscheinlichsten Artikel. Keine Auslassungen.${fachHinweis} NUR JSON-Array:[{"name":"X","qty":1,"unit":"Stück","sch":null}] Antworte NUR mit dem JSON-Array, kein anderer Text.`
       );
+      if(!parsed || !parsed.length) { alert("Keine Artikel erkannt. Bitte deutlicheres Foto machen."); setBusy(false); return; }
       onAdd(oId, parsed.map(x=>({...x, sch: neuSch !== null ? neuSch : (x.sch ?? null)})));
     } catch(e) {
       if(e.message==="KEIN_KEY") alert("📷 Foto-Erkennung benötigt einen Anthropic API-Key.\n\n⚙️ Einstellungen öffnen → API-Key eingeben → Starten");
-      else alert("Fehler: " + e.message);
+      else alert("Fehler beim Foto-Scan: " + e.message);
     }
     setBusy(false);
   };
@@ -430,11 +436,12 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
             ))}
           </div>
           <div style={{display:"flex",alignItems:"center",gap:5,flexWrap:"wrap"}}>
-            <span style={{fontSize:10,fontWeight:700,color:"#9ca3af"}}>NEUER ARTIKEL → SCH.:</span>
-            <SchBtn label="–" aktiv={neuSch===null} onClick={()=>setNeuSch(null)} n={0}/>
+            <span style={{fontSize:10,fontWeight:700,color:"#9ca3af"}}>EINLEGEN IN SCH.:</span>
+            <SchBtn label="– (keine)" aktiv={neuSch===null} onClick={()=>setNeuSch(null)} n={0}/>
             {(ort.faecher||[]).map(s=>(
               <SchBtn key={s} label={`${s}`} aktiv={neuSch===s} onClick={()=>setNeuSch(s)} n={0}/>
             ))}
+            {neuSch!==null && <span style={{fontSize:11,color:"#3d5c3f",fontWeight:700,background:"#e8f3e8",padding:"2px 8px",borderRadius:8}}>→ Schublade {neuSch} gewählt</span>}
           </div>
         </div>
       )}
