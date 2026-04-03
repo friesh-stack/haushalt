@@ -111,13 +111,29 @@ async function claudeCall(messages, system) {
   return JSON.parse(t.replace(/```json|```/g,"").trim());
 }
 
+// ── Lokaler Cache (Offline-Backup) ────────────────────────
+const cacheKey = path => "hm_cache_" + path;
+const cacheSet = (path, data) => { try { localStorage.setItem(cacheKey(path), JSON.stringify(data)); } catch {} };
+const cacheGet = path => { try { const d = localStorage.getItem(cacheKey(path)); return d ? JSON.parse(d) : null; } catch { return null; } };
+
 // ── Firebase ──────────────────────────────────────────────
 const fbBase = () => lsGet("hm_fb");
 const fbUrl = path => `${fbBase()}/haushalt/${path}.json`;
 const fbLesen = async path => {
-  try { const r = await fetch(fbUrl(path)); return r.ok ? await r.json() : null; } catch { return null; }
+  try {
+    const r = await fetch(fbUrl(path));
+    if (r.ok) {
+      const data = await r.json();
+      if (data) cacheSet(path, data); // Lokalen Cache aktualisieren
+      return data;
+    }
+    return cacheGet(path); // Offline: lokalen Cache verwenden
+  } catch {
+    return cacheGet(path); // Offline: lokalen Cache verwenden
+  }
 };
 const fbSchreiben = async (path, data) => {
+  cacheSet(path, data); // Immer lokal speichern
   try { await fetch(fbUrl(path), {method:"PUT", headers:{"Content-Type":"application/json"}, body:JSON.stringify(data)}); } catch {}
 };
 
@@ -811,6 +827,16 @@ const App = () => {
   const laden = useCallback(async (still=false) => {
     const fb = lsGet("hm_fb"); if(!fb) return;
     if(!still) setSync("syncing");
+    
+    // Zuerst lokalen Cache laden (sofort verfügbar)
+    const bc=cacheGet("bestand"), ec=cacheGet("einkauf"), kc=cacheGet("kassenbons"), tc=cacheGet("todos");
+    if(bc && typeof bc==="object") setBestand(bc);
+    if(ec) setEinkauf(Array.isArray(ec)?ec:Object.values(ec));
+    if(kc) setKassenbons(Array.isArray(kc)?kc:Object.values(kc));
+    if(tc) setTodos(Array.isArray(tc)?tc:Object.values(tc));
+    if(bc||ec||kc||tc) setGeladen(true); // Zeige App sofort mit Cache-Daten
+    
+    // Dann Firebase laden (Sync)
     try {
       const [b,e,k,t] = await Promise.all([fbLesen("bestand"),fbLesen("einkauf"),fbLesen("kassenbons"),fbLesen("todos")]);
       if(b && typeof b==="object") setBestand(b);
@@ -818,7 +844,7 @@ const App = () => {
       if(k) setKassenbons(Array.isArray(k)?k:Object.values(k));
       if(t) setTodos(Array.isArray(t)?t:Object.values(t));
       setSync("ok");
-    } catch { setSync("err"); }
+    } catch { setSync(bc||ec?"cache":"err"); }
     setGeladen(true);
   }, []);
 
@@ -870,7 +896,7 @@ const App = () => {
           <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:3}}>
             <span style={{fontSize:10,background:"rgba(255,255,255,0.15)",padding:"3px 7px",borderRadius:10,display:"flex",alignItems:"center",gap:3}}>
               <span style={{width:6,height:6,borderRadius:"50%",background:sC,display:"inline-block"}}/>
-              {sync==="ok"?"Sync ✓":sync==="err"?"❌ Fehler":"⏳"}
+              {sync==="ok"?"Sync ✓":sync==="cache"?"📦 Offline (Cache)":sync==="err"?"❌ Fehler":"⏳"}
             </span>
             <button onClick={()=>{lsDel("hm_fb");setAktiv(false);setGeladen(false);}}
               style={{fontSize:9,background:"rgba(255,255,255,0.1)",border:"none",color:"rgba(255,255,255,0.7)",padding:"2px 6px",borderRadius:5,cursor:"pointer"}}>
