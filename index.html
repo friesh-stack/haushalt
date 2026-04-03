@@ -15,9 +15,12 @@
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Segoe UI',system-ui,sans-serif;background:#f5f5f0;font-size:16px;}
-input,button,select{font-family:inherit;font-size:16px;}
+html,body{height:100%;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#f5f5f0;font-size:17px;}
+input,button,select{font-family:inherit;font-size:17px;}
+#root{height:100%;}
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 </style>
 </head>
 <body>
@@ -334,6 +337,83 @@ const Einrichtung = ({onStart}) => {
   );
 };
 
+// ── FOTO-VORSCHAU + BEARBEITUNG ───────────────────────────
+const FotoVorschau = ({bild, erkannt, ortName, faecher, neuSch, onBestaetigen, onAbbrechen}) => {
+  const [items, setItems] = useState(erkannt.map((x,i)=>({...x, _id:i})));
+  const [editIdx, setEditIdx] = useState(null);
+  const [editVal, setEditVal] = useState({});
+
+  const update = (idx, feld, val) => setItems(p=>p.map((it,i)=>i===idx?{...it,[feld]:val}:it));
+  const loeschen = idx => setItems(p=>p.filter((_,i)=>i!==idx));
+  const hinzufuegen = () => setItems(p=>[...p,{name:"",qty:1,unit:"Stück",sch:neuSch||null,_id:Date.now()}]);
+
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,display:"flex",flexDirection:"column",maxWidth:500,margin:"0 auto"}}>
+      <div style={{background:"#2c3e2d",padding:"12px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <span style={{color:"white",fontWeight:800,fontSize:16}}>📷 Foto-Erkennung prüfen</span>
+        <button onClick={onAbbrechen} style={{background:"rgba(255,255,255,0.2)",border:"none",color:"white",borderRadius:8,padding:"4px 10px",cursor:"pointer",fontSize:14}}>✕</button>
+      </div>
+      <div style={{flex:1,overflowY:"auto",background:"#f5f5f0",padding:12}}>
+        {/* Vorschaubild */}
+        <img src={bild} alt="Scan" style={{width:"100%",maxHeight:200,objectFit:"contain",borderRadius:10,marginBottom:10,background:"white",border:"1px solid #e5e7eb"}}/>
+        <p style={{fontSize:13,color:"#6b7280",marginBottom:8,fontWeight:600}}>Erkannte Artikel – tippen zum Bearbeiten:</p>
+        {items.map((item,idx)=>(
+          <div key={item._id} style={{background:"white",borderRadius:12,padding:"10px 12px",marginBottom:8,boxShadow:"0 1px 4px rgba(0,0,0,0.08)",animation:"fadein 0.2s ease"}}>
+            {editIdx===idx ? (
+              <div>
+                <input value={editVal.name??item.name} onChange={e=>setEditVal(p=>({...p,name:e.target.value}))}
+                  placeholder="Artikelname" autoFocus
+                  style={{width:"100%",padding:"8px 10px",borderRadius:8,border:"2px solid #3d5c3f",fontSize:16,outline:"none",marginBottom:6}}/>
+                <div style={{display:"flex",gap:6,marginBottom:6}}>
+                  <input type="number" value={editVal.qty??item.qty} onChange={e=>setEditVal(p=>({...p,qty:parseFloat(e.target.value)||1}))}
+                    style={{width:70,padding:"7px 8px",borderRadius:8,border:"1.5px solid #e5e7eb",fontSize:15,outline:"none"}}/>
+                  <select value={editVal.unit??item.unit} onChange={e=>setEditVal(p=>({...p,unit:e.target.value}))}
+                    style={{flex:1,padding:"7px 8px",borderRadius:8,border:"1.5px solid #e5e7eb",fontSize:15,outline:"none"}}>
+                    {["Stück","kg","g","L","ml","Packung","Flasche","Dose","Glas","Beutel","Becher"].map(u=><option key={u}>{u}</option>)}
+                  </select>
+                  {faecher.length>0 && <select value={editVal.sch??item.sch??""} onChange={e=>setEditVal(p=>({...p,sch:e.target.value?parseInt(e.target.value):null}))}
+                    style={{width:80,padding:"7px 6px",borderRadius:8,border:"1.5px solid #e5e7eb",fontSize:14,outline:"none"}}>
+                    <option value="">–</option>
+                    {faecher.map(f=><option key={f} value={f}>Sch.{f}</option>)}
+                  </select>}
+                </div>
+                <div style={{display:"flex",gap:6}}>
+                  <button onClick={()=>{update(idx,"name",editVal.name??item.name);update(idx,"qty",editVal.qty??item.qty);update(idx,"unit",editVal.unit??item.unit);update(idx,"sch",editVal.sch!==undefined?editVal.sch:item.sch);setEditIdx(null);setEditVal({});}}
+                    style={{flex:1,padding:"8px",background:"#3d5c3f",color:"white",border:"none",borderRadius:8,cursor:"pointer",fontWeight:700,fontSize:14}}>✓ OK</button>
+                  <button onClick={()=>{setEditIdx(null);setEditVal({});}}
+                    style={{padding:"8px 12px",background:"#e5e7eb",color:"#374151",border:"none",borderRadius:8,cursor:"pointer",fontSize:14}}>Abbrechen</button>
+                </div>
+              </div>
+            ) : (
+              <div style={{display:"flex",alignItems:"center",gap:8}} onClick={()=>{setEditIdx(idx);setEditVal({});}}>
+                <div style={{flex:1,cursor:"pointer"}}>
+                  <span style={{fontSize:16,fontWeight:700}}>{item.name||"(leer)"}</span>
+                  <span style={{fontSize:13,color:"#6b7280",marginLeft:6}}>{item.qty} {item.unit}</span>
+                  {item.sch&&<span style={{fontSize:12,color:"#3d5c3f",marginLeft:5,background:"#e8f3e8",padding:"1px 6px",borderRadius:6,fontWeight:600}}>#{item.sch}</span>}
+                  <span style={{fontSize:11,color:"#9ca3af",marginLeft:6}}>✏️ tippen</span>
+                </div>
+                <button onClick={e=>{e.stopPropagation();loeschen(idx);}}
+                  style={{background:"#fee2e2",border:"none",cursor:"pointer",color:"#dc2626",width:28,height:28,borderRadius:7,fontWeight:700,fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>×</button>
+              </div>
+            )}
+          </div>
+        ))}
+        <button onClick={hinzufuegen}
+          style={{width:"100%",padding:"10px",background:"white",border:"2px dashed #3d5c3f",borderRadius:10,color:"#3d5c3f",cursor:"pointer",fontSize:15,fontWeight:700,marginTop:4}}>
+          + Artikel hinzufügen
+        </button>
+      </div>
+      <div style={{padding:"12px 16px",background:"white",borderTop:"1px solid #e5e7eb",display:"flex",gap:10}}>
+        <button onClick={onAbbrechen} style={{flex:1,padding:"12px",background:"#e5e7eb",color:"#374151",border:"none",borderRadius:10,cursor:"pointer",fontSize:15,fontWeight:700}}>Abbrechen</button>
+        <button onClick={()=>onBestaetigen(items.filter(i=>i.name.trim()))}
+          style={{flex:2,padding:"12px",background:"#3d5c3f",color:"white",border:"none",borderRadius:10,cursor:"pointer",fontSize:15,fontWeight:800}}>
+          ✅ {items.filter(i=>i.name.trim()).length} Artikel speichern
+        </button>
+      </div>
+    </div>
+  );
+};
+
 // ── BESTAND TAB ───────────────────────────────────────────
 const BestandTab = ({bestand, onAdd, onRemove}) => {
   const [bId, setBId] = useState("vr");
@@ -342,6 +422,8 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
   const [neuSch, setNeuSch] = useState(null);
   const [busy, setBusy] = useState(false);
   const [sortAZ, setSortAZ] = useState(false);
+  const [fotoData, setFotoData] = useState(null); // {bild, erkannt}
+  const [editItem, setEditItem] = useState(null); // {id, ...item}
 
   const bereich = BEREICHE.find(b=>b.id===bId);
   const ort = ALLE_ORTE.find(o=>o.id===oId);
@@ -375,15 +457,24 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
 
   const fotoScanBestand = async f => {
     setBusy(true);
+    // Bild-URL für Vorschau erstellen
+    const bildUrl = URL.createObjectURL(f);
     try {
       const {data,mt} = await zuBase64(f);
-      const fachHinweis = hatSch ? ` Schubladennummer aus ${JSON.stringify(ort.faecher||[])} als "sch" falls erkennbar, sonst null.` : "";
+      const fachHinweis = hatSch ? ` Schubladennummer aus Liste ${JSON.stringify(ort?.faecher||[])} als "sch" falls erkennbar, sonst null.` : "";
       const parsed = await claudeCall(
-        [{role:"user",content:[{type:"image",source:{type:"base64",media_type:mt,data}},{type:"text",text:"Bitte lies ALLE Artikel/Lebensmittel aus diesem Bild oder handschriftlichen Zettel. Lies jeden einzelnen Eintrag sorgfältig, auch schwer lesbare Handschrift. Gib alle Artikel zurück, auch wenn die Handschrift unklar ist."}]}],
-        `Extrahiere ALLE sichtbaren Lebensmittel und Artikel vollständig. Auch bei unlesbarer Handschrift: rate den wahrscheinlichsten Artikel. Keine Auslassungen.${fachHinweis} NUR JSON-Array:[{"name":"X","qty":1,"unit":"Stück","sch":null}] Antworte NUR mit dem JSON-Array, kein anderer Text.`
+        [{role:"user",content:[
+          {type:"image",source:{type:"base64",media_type:mt,data}},
+          {type:"text",text:"Bitte lies JEDEN Artikel/Lebensmittel aus diesem Bild oder handschriftlichen Zettel vollständig. Achte auf jede Zeile, auch schlecht leserliche. Bei unlesbaren Wörtern: beste Schätzung angeben."}
+        ]}],
+        `Extrahiere ALLE Lebensmittel und Artikel aus dem Bild/Zettel. Jeden Eintrag einzeln. Auch bei unlesbarer Handschrift die wahrscheinlichste Variante nehmen. Keine Auslassungen.${fachHinweis} NUR JSON-Array:[{"name":"X","qty":1,"unit":"Stück","sch":null}] Nur JSON, kein anderer Text.`
       );
-      if(!parsed || !parsed.length) { alert("Keine Artikel erkannt. Bitte deutlicheres Foto machen."); setBusy(false); return; }
-      onAdd(oId, parsed.map(x=>({...x, sch: neuSch !== null ? neuSch : (x.sch ?? null)})));
+      if(!parsed || !parsed.length) {
+        alert("Keine Artikel erkannt. Bitte deutlicheres Foto machen."); setBusy(false); return;
+      }
+      // Vorschau anzeigen statt direkt speichern
+      const mitSch = parsed.map(x=>({...x, sch: neuSch !== null ? neuSch : (x.sch ?? null)}));
+      setFotoData({bild: bildUrl, erkannt: mitSch});
     } catch(e) {
       if(e.message==="KEIN_KEY") alert("📷 Foto-Erkennung benötigt einen Anthropic API-Key.\n\n⚙️ Einstellungen öffnen → API-Key eingeben → Starten");
       else alert("Fehler beim Foto-Scan: " + e.message);
@@ -391,8 +482,16 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
     setBusy(false);
   };
 
+  const fotoBestaetigen = (items) => {
+    onAdd(oId, items.map(x=>({...x, sch: x.sch ?? null})));
+    setFotoData(null);
+  };
+
   return (
     <div>
+      {/* Foto-Vorschau Overlay */}
+      {fotoData && <FotoVorschau bild={fotoData.bild} erkannt={fotoData.erkannt} ortName={ort?.name||""} faecher={ort?.faecher||[]} neuSch={neuSch} onBestaetigen={fotoBestaetigen} onAbbrechen={()=>setFotoData(null)}/>}
+
       {/* Bereiche */}
       <div style={{display:"flex",gap:6,marginBottom:12}}>
         {BEREICHE.map(b => (
@@ -460,14 +559,43 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
         {items.length===0
           ? <div style={{textAlign:"center",padding:"24px",color:"#9ca3af"}}><div style={{fontSize:28}}>{ort?.icon}</div><p style={{margin:"6px 0 0",fontSize:12}}>Leer – Artikel eingeben!</p></div>
           : items.map((item,i) => (
-            <div key={item.id} style={{display:"flex",alignItems:"center",padding:"9px 14px",borderBottom:i<items.length-1?"1px solid #f3f4f6":"none",gap:8}}>
-              <div style={{flex:1}}>
-                <span style={{fontSize:16,fontWeight:700}}>{item.name}</span>
-                <span style={{fontSize:14,color:"#6b7280",marginLeft:6}}>{item.qty} {item.unit}</span>
-                {item.sch && <span style={{fontSize:12,color:"#3d5c3f",marginLeft:5,background:"#e8f3e8",padding:"2px 7px",borderRadius:6,fontWeight:600}}>#{item.sch}</span>}
-              </div>
-              <span style={{fontSize:9,color:"#d1d5db"}}>{item.datum}</span>
-              <button onClick={()=>onRemove(oId,item.id)} style={{background:"#fee2e2",border:"none",cursor:"pointer",color:"#dc2626",width:26,height:26,borderRadius:7,fontWeight:700,fontSize:14,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
+            <div key={item.id}>
+              {editItem?.id===item.id ? (
+                <div style={{padding:"10px 14px",background:"#f0f9f0",borderBottom:i<items.length-1?"1px solid #e5e7eb":"none"}}>
+                  <input value={editItem.name} onChange={e=>setEditItem(p=>({...p,name:e.target.value}))} autoFocus
+                    style={{width:"100%",padding:"8px 10px",borderRadius:8,border:"2px solid #3d5c3f",fontSize:17,outline:"none",marginBottom:6}}/>
+                  <div style={{display:"flex",gap:6,marginBottom:6}}>
+                    <input type="number" value={editItem.qty} onChange={e=>setEditItem(p=>({...p,qty:parseFloat(e.target.value)||1}))}
+                      style={{width:65,padding:"7px 8px",borderRadius:8,border:"1.5px solid #e5e7eb",fontSize:15,outline:"none"}}/>
+                    <select value={editItem.unit} onChange={e=>setEditItem(p=>({...p,unit:e.target.value}))}
+                      style={{flex:1,padding:"7px 8px",borderRadius:8,border:"1.5px solid #e5e7eb",fontSize:15,outline:"none"}}>
+                      {["Stück","kg","g","L","ml","Packung","Flasche","Dose","Glas","Beutel"].map(u=><option key={u}>{u}</option>)}
+                    </select>
+                    {hatSch && <select value={editItem.sch||""} onChange={e=>setEditItem(p=>({...p,sch:e.target.value?parseInt(e.target.value):null}))}
+                      style={{width:85,padding:"7px 6px",borderRadius:8,border:"1.5px solid #e5e7eb",fontSize:14,outline:"none"}}>
+                      <option value="">– kein</option>
+                      {(ort?.faecher||[]).map(f=><option key={f} value={f}>#{f}</option>)}
+                    </select>}
+                  </div>
+                  <div style={{display:"flex",gap:6}}>
+                    <button onClick={()=>{onRemove(oId,item.id);onAdd(oId,[{name:editItem.name,qty:editItem.qty,unit:editItem.unit,sch:editItem.sch}]);setEditItem(null);}}
+                      style={{flex:1,padding:"9px",background:"#3d5c3f",color:"white",border:"none",borderRadius:8,cursor:"pointer",fontWeight:700,fontSize:15}}>✓ Speichern</button>
+                    <button onClick={()=>setEditItem(null)}
+                      style={{padding:"9px 14px",background:"#e5e7eb",color:"#374151",border:"none",borderRadius:8,cursor:"pointer",fontSize:15}}>✕</button>
+                  </div>
+                </div>
+              ) : (
+                <div style={{display:"flex",alignItems:"center",padding:"11px 14px",borderBottom:i<items.length-1?"1px solid #f3f4f6":"none",gap:8,cursor:"pointer"}} onClick={()=>setEditItem({...item})}>
+                  <div style={{flex:1}}>
+                    <span style={{fontSize:17,fontWeight:700}}>{item.name}</span>
+                    <span style={{fontSize:14,color:"#6b7280",marginLeft:6}}>{item.qty} {item.unit}</span>
+                    {item.sch && <span style={{fontSize:13,color:"#3d5c3f",marginLeft:5,background:"#e8f3e8",padding:"2px 7px",borderRadius:6,fontWeight:700}}>#{item.sch}</span>}
+                    <span style={{fontSize:10,color:"#c0c9c0",marginLeft:5}}>✏️</span>
+                  </div>
+                  <span style={{fontSize:10,color:"#d1d5db",marginRight:4,flexShrink:0}}>{item.datum}</span>
+                  <button onClick={e=>{e.stopPropagation();onRemove(oId,item.id);}} style={{background:"#fee2e2",border:"none",cursor:"pointer",color:"#dc2626",width:28,height:28,borderRadius:7,fontWeight:700,fontSize:15,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>×</button>
+                </div>
+              )}
             </div>
           ))
         }
@@ -1015,7 +1143,7 @@ const App = () => {
   const sC = sync==="ok"?"#4ade80":sync==="err"?"#f87171":"#fbbf24";
 
   return (
-    <div style={{fontFamily:"'Segoe UI',system-ui,sans-serif",maxWidth:500,margin:"0 auto",minHeight:"100vh",background:"#f5f5f0",display:"flex",flexDirection:"column"}}>
+    <div style={{fontFamily:"'Segoe UI',system-ui,sans-serif",maxWidth:500,margin:"0 auto",height:"100%",minHeight:"100vh",background:"#f5f5f0",display:"flex",flexDirection:"column"}}>
       <div style={{background:"linear-gradient(135deg,#2c3e2d,#3d5c3f)",padding:"14px 18px 10px",color:"white"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
           <h1 style={{margin:0,fontSize:19,fontWeight:800}}>🏠 Haushalt Manager</h1>
@@ -1036,7 +1164,7 @@ const App = () => {
         </div>
       </div>
 
-      <div style={{padding:12,flex:1}}>
+      <div style={{padding:12,flex:"1 1 auto",overflowY:"auto"}}>
         {tab==="bestand"    && <BestandTab bestand={bestand} onAdd={addBestand} onRemove={remBestand}/>}
         {tab==="einkauf"    && <EinkaufTab einkauf={einkauf} onAdd={addEinkauf} onToggle={togEinkauf} onRemove={remEinkauf} onShop={shopEinkauf} onClear={clearEinkauf}/>}
         {tab==="uebersicht" && <UebersichtTab bestand={bestand} einkauf={einkauf} kassenbons={kassenbons} todos={todos}/>}
