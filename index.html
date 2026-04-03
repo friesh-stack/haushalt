@@ -119,16 +119,33 @@ const fbSchreiben = async (path, data) => {
 const useSprache = cb => {
   const ref = useRef();
   const [an, setAn] = useState(false);
+  const [vorschau, setVorschau] = useState("");
   const start = () => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) { alert("Spracherkennung nicht verfügbar"); return; }
-    const r = new SR(); r.lang="de-DE"; r.continuous=false; r.interimResults=false;
-    r.onstart=()=>setAn(true); r.onend=()=>setAn(false); r.onerror=()=>setAn(false);
-    r.onresult=e=>cb(e.results[0][0].transcript);
+    const r = new SR();
+    r.lang="de-DE";
+    r.continuous=true;
+    r.interimResults=true;
+    r.onstart=()=>setAn(true);
+    r.onend=()=>{ setAn(false); setVorschau(""); };
+    r.onerror=()=>{ setAn(false); setVorschau(""); };
+    r.onresult=e=>{
+      let interim=""; let final="";
+      for(let i=e.resultIndex;i<e.results.length;i++){
+        if(e.results[i].isFinal) final+=e.results[i][0].transcript+" ";
+        else interim+=e.results[i][0].transcript;
+      }
+      if(interim) setVorschau(interim);
+      if(final.trim()) { setVorschau(""); cb(final.trim()); }
+    };
     ref.current=r; r.start();
   };
-  const stop = () => { ref.current?.stop(); setAn(false); };
-  return {an, start, stop};
+  const stop = () => {
+    if(ref.current){ ref.current.stop(); }
+    setAn(false); setVorschau("");
+  };
+  return {an, start, stop, vorschau};
 };
 const zuBase64 = f => new Promise((ok,err) => {
   const r = new FileReader();
@@ -148,19 +165,20 @@ const Btn = ({onClick, disabled, bg="#3d5c3f", children, style={}}) => (
 const EingabeFeld = ({ph, onOK, onBild, busy}) => {
   const [t, setT] = useState("");
   const fRef = useRef();
-  const {an, start, stop} = useSprache(txt => { setT(txt); setTimeout(()=>{ onOK(txt); setT(""); },100); });
+  const {an, start, stop, vorschau} = useSprache(txt => { onOK(txt); setT(""); });
   const go = () => { if(!t.trim()) return; onOK(t); setT(""); };
   return (
     <div style={{background:"white", borderRadius:14, padding:14, marginBottom:12, boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
       <div style={{display:"flex", gap:8, marginBottom:8}}>
-        <input value={t} onChange={e=>setT(e.target.value)}
-          onKeyDown={e=>e.key==="Enter"&&go()} placeholder={ph} disabled={busy}
-          style={{flex:1, padding:"10px 12px", borderRadius:10, border:"1.5px solid #e5e7eb", fontSize:14, outline:"none", background:"#fafafa"}}/>
-        <Btn onClick={go} disabled={!t.trim()||busy}>+</Btn>
+        <input value={an ? vorschau : t}
+          onChange={e=>{ if(!an) setT(e.target.value); }}
+          onKeyDown={e=>e.key==="Enter"&&go()} placeholder={an ? "🎤 Sprechen Sie jetzt…" : ph} disabled={busy}
+          style={{flex:1, padding:"10px 12px", borderRadius:10, border:`1.5px solid ${an?"#4a7a4d":"#e5e7eb"}`, fontSize:14, outline:"none", background: an?"#f0f7f0":"#fafafa", color: an?"#2c3e2d":"inherit"}}/>
+        <Btn onClick={go} disabled={(!t.trim()&&!an)||busy}>+</Btn>
       </div>
       <div style={{display:"flex", gap:8}}>
         <Btn onClick={an?stop:start} disabled={busy} bg={an?"#dc2626":"#4a7a4d"} style={{flex:1,fontSize:13}}>
-          {an ? "🔴 Stoppen" : "🎤 Sprache"}
+          {an ? "🔴 Fertig (tippen)" : "🎤 Sprache"}
         </Btn>
         {onBild && <>
           <Btn onClick={()=>fRef.current?.click()} disabled={busy} bg="#2563eb" style={{flex:1,fontSize:13}}>📷 Foto</Btn>
@@ -168,6 +186,7 @@ const EingabeFeld = ({ph, onOK, onBild, busy}) => {
             onChange={async e=>{const f=e.target.files[0];if(f){await onBild(f);}e.target.value="";}}/>
         </>}
       </div>
+      {an && <p style={{fontSize:11,color:"#4a7a4d",margin:"6px 0 0",textAlign:"center"}}>🎙️ Hört zu… Sprechen Sie, dann 🔴 Fertig drücken</p>}
       {busy && <div style={{textAlign:"center",color:"#6b7280",fontSize:12,marginTop:8,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
         <span style={{display:"inline-block",animation:"spin 1s linear infinite"}}>⏳</span> Verarbeite…
       </div>}
