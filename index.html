@@ -363,7 +363,7 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
         <div style={{padding:"10px 14px",background:"#f0f4f1",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <span style={{fontWeight:700,fontSize:13}}>{ort?.icon} {ort?.name} <span style={{fontSize:10,color:"#9ca3af"}}>({ort?.info})</span>{filtSch?` · Schublade ${filtSch}`:""}</span>
           <div style={{display:"flex",alignItems:"center",gap:6}}>
-            <button onClick={()=>setSortAZ(s=>!s)} style={{background:sortAZ?"#3d5c3f":"#e5e7eb",color:sortAZ?"white":"#374151",border:"none",borderRadius:6,padding:"2px 7px",fontSize:11,cursor:"pointer",fontWeight:600}}>{sortAZ?"A→Z":"Sortieren"}</button>
+            <button onClick={()=>setSortAZ(s=>!s)} style={{background:sortAZ?"#3d5c3f":"#e5e7eb",color:sortAZ?"white":"#374151",border:"none",borderRadius:6,padding:"2px 7px",fontSize:11,cursor:"pointer",fontWeight:600}}>{sortAZ?"✓ A→Z":"A→Z"}</button>
             <span style={{fontSize:11,color:"#6b7280"}}>{items.length}</span>
           </div>
         </div>
@@ -382,6 +382,35 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
           ))
         }
       </div>
+
+      {/* Globale alphabetische Sortierung */}
+      {sortAZ && (() => {
+        const alleGlobal = ALLE_ORTE.flatMap(o => (bestand[o.id]||[]).map(i=>({...i,ort:o})));
+        const sortiert = [...alleGlobal].sort((a,b)=>a.name.localeCompare(b.name,"de"));
+        return (
+          <div style={{marginTop:12}}>
+            <p style={{fontSize:10,fontWeight:700,color:"#3d5c3f",textTransform:"uppercase",margin:"0 0 8px"}}>📋 Alle Artikel A–Z ({sortiert.length})</p>
+            <div style={{background:"white",borderRadius:14,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+              {sortiert.length===0
+                ?<div style={{textAlign:"center",padding:"20px",color:"#9ca3af",fontSize:13}}>Noch keine Artikel</div>
+                :sortiert.map((item,i)=>(
+                  <div key={item.id+item.ort.id} style={{display:"flex",alignItems:"center",padding:"8px 14px",borderBottom:i<sortiert.length-1?"1px solid #f3f4f6":"none",gap:8}}>
+                    <div style={{flex:1}}>
+                      <span style={{fontSize:13,fontWeight:700}}>{item.name}</span>
+                      <span style={{fontSize:11,color:"#6b7280",marginLeft:6}}>{item.qty} {item.unit}</span>
+                      {item.sch&&<span style={{fontSize:10,color:"#9ca3af",marginLeft:4,background:"#f3f4f6",padding:"1px 4px",borderRadius:5}}>Sch.{item.sch}</span>}
+                    </div>
+                    <div style={{textAlign:"right",flexShrink:0}}>
+                      <div style={{fontSize:11,fontWeight:600,color:"#3d5c3f"}}>{item.ort.icon} {item.ort.name}</div>
+                      <div style={{fontSize:9,color:"#9ca3af"}}>{item.ort.bName}</div>
+                    </div>
+                  </div>
+                ))
+              }
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Alle Lagerorte Übersicht */}
       <p style={{fontSize:10,fontWeight:700,color:"#9ca3af",textTransform:"uppercase",margin:"14px 0 8px"}}>Alle Lagerorte</p>
@@ -534,6 +563,7 @@ const EinkaufTab = ({einkauf, onAdd, onToggle, onRemove, onShop, onClear}) => {
                   <div style={{flex:1,textDecoration:item.erledigt?"line-through":"none"}}>
                     <span style={{fontSize:14,fontWeight:600}}>{item.name}</span>
                     <span style={{fontSize:12,color:"#6b7280",marginLeft:6}}>{item.qty} {item.unit}</span>
+                    {item.datum && <span style={{fontSize:10,color:"#d1d5db",marginLeft:5}}>📅 {item.datum}</span>}
                   </div>
                   <select value={item.shop||""} onChange={e=>onShop(item.id,e.target.value)} style={{fontSize:10,border:"1px solid #e5e7eb",borderRadius:6,padding:"2px",maxWidth:70}}>
                     {ALLE_SHOPS.map(s=><option key={s} value={s}>{s}</option>)}
