@@ -99,7 +99,7 @@ function parseText(text) {
 // ── Claude API ────────────────────────────────────────────
 async function claudeCall(messages, system) {
   const key = lsGet("hm_key");
-  if (!key) throw new Error("kein key");
+  if (!key) throw new Error("KEIN_KEY");
   const r = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -108,12 +108,18 @@ async function claudeCall(messages, system) {
       "anthropic-version": "2023-06-01",
       "anthropic-dangerous-direct-browser-access": "true"
     },
-    body: JSON.stringify({model:"claude-haiku-4-5-20251001", max_tokens:800, system, messages})
+    body: JSON.stringify({model:"claude-haiku-4-5-20251001", max_tokens:1000, system, messages})
   });
+  if (!r.ok) {
+    const err = await r.json().catch(()=>({}));
+    throw new Error(err?.error?.message || "HTTP " + r.status);
+  }
   const d = await r.json();
   if (d.error) throw new Error(d.error.message);
   const t = d.content?.[0]?.text || "";
-  return JSON.parse(t.replace(/```json|```/g,"").trim());
+  const clean = t.replace(/```json|```/g,"").trim();
+  try { return JSON.parse(clean); }
+  catch { throw new Error("JSON Parse Fehler: " + clean.slice(0,100)); }
 }
 
 // ── Lokaler Cache (Offline-Backup) ────────────────────────
@@ -246,7 +252,7 @@ const Einrichtung = ({onStart}) => {
     const u = fb.trim().replace(/\/$/,"");
     if (!u.includes("firebaseio.com")) { setErr("Ungültige Firebase-URL – muss firebaseio.com enthalten"); return; }
     lsSet("hm_fb", u);
-    if (key.trim()) lsSet("hm_key", key.trim());
+    lsSet("hm_key", key.trim()); // Auch leeren Key speichern (zum Löschen)
     onStart();
   };
   return (
@@ -264,8 +270,8 @@ const Einrichtung = ({onStart}) => {
           {err && <p style={{color:"#dc2626",fontSize:12,marginTop:5}}>⚠️ {err}</p>}
         </div>
         <div style={{background:"white",borderRadius:14,padding:16,marginBottom:16,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
-          <p style={{fontWeight:800,fontSize:15,marginBottom:2}}>🤖 Anthropic API-Key <span style={{fontSize:11,color:"#9ca3af",fontWeight:400}}>(optional)</span></p>
-          <p style={{fontSize:12,color:"#6b7280",marginBottom:8}}>Nur für Foto-Scan & Kassenbons. Texteingabe funktioniert ohne Key.</p>
+          <p style={{fontWeight:800,fontSize:15,marginBottom:2}}>🤖 Anthropic API-Key <span style={{fontSize:11,color:key.trim()?"#3d5c3f":"#9ca3af",fontWeight:600}}>{key.trim() ? "✓ gespeichert" : "(optional)"}</span></p>
+          <p style={{fontSize:12,color:"#6b7280",marginBottom:8}}>Für Foto-Erkennung, handschriftliche Zettel & Kassenbons. Texteingabe funktioniert ohne Key.</p>
           <input value={key} onChange={e=>setKey(e.target.value)} type="password"
             placeholder="sk-ant-api03-…"
             style={{width:"100%",padding:"11px 12px",borderRadius:10,border:"1.5px solid #e5e7eb",fontSize:13,outline:"none",background:"#fafafa"}}/>
@@ -327,7 +333,10 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
         `Extrahiere alle sichtbaren Lebensmittel/Artikel.${fachHinweis} NUR JSON-Array:[{"name":"X","qty":1,"unit":"Stück","sch":null}]`
       );
       onAdd(oId, parsed.map(x=>({...x, sch: neuSch !== null ? neuSch : (x.sch ?? null)})));
-    } catch { alert("Foto-Erkennung benötigt Anthropic API-Key (in ⚙️ Einstellungen eintragen)."); }
+    } catch(e) {
+      if(e.message==="KEIN_KEY") alert("📷 Foto-Erkennung benötigt einen Anthropic API-Key.\n\n⚙️ Einstellungen öffnen → API-Key eingeben → Starten");
+      else alert("Fehler: " + e.message);
+    }
     setBusy(false);
   };
 
@@ -499,7 +508,10 @@ const EinkaufTab = ({einkauf, onAdd, onToggle, onRemove, onShop, onClear}) => {
         `Scanne Einkaufsliste. Shops:${ALLE_SHOPS.join(",")} oder null. NUR JSON-Array:[{"name":"X","qty":1,"unit":"Stück","shop":null}]`
       );
       onAdd(items.map(i=>({...i,shop:i.shop||defShop()})));
-    } catch { alert("Foto-Scan benötigt Anthropic API-Key."); }
+    } catch(e) {
+      if(e.message==="KEIN_KEY") alert("📷 Foto-Scan benötigt einen Anthropic API-Key.\n\n⚙️ Einstellungen öffnen → API-Key eingeben → Starten");
+      else alert("Fehler: " + e.message);
+    }
     setBusy(false);
   };
 
@@ -690,7 +702,10 @@ const KassenbonTab = ({kassenbons, setKassenbons, onAddEinkauf}) => {
         `Lies Kassenbon. NUR JSON:{"store":"X","date":"X","total":"X","items":[{"name":"X","qty":1,"price":"X"}]}`
       );
       if(b){const n={...b,id:uid(),scanDatum:datum()};setAkt(n);setKassenbons(p=>[n,...p]);}
-    } catch { alert("Kassenbons benötigen Anthropic API-Key (in Einstellungen eintragen)."); }
+    } catch(e) {
+      if(e.message==="KEIN_KEY") alert("🧾 Kassenbon-Scan benötigt einen Anthropic API-Key.\n\n⚙️ Einstellungen öffnen → API-Key eingeben → Starten");
+      else alert("Fehler: " + e.message);
+    }
     setBusy(false); e.target.value="";
   };
   return (
@@ -955,7 +970,8 @@ const App = () => {
           <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:3}}>
             <span style={{fontSize:10,background:"rgba(255,255,255,0.15)",padding:"3px 7px",borderRadius:10,display:"flex",alignItems:"center",gap:3}}>
               <span style={{width:6,height:6,borderRadius:"50%",background:sC,display:"inline-block"}}/>
-              {sync==="ok"?"Sync ✓":sync==="cache"?"📦 Offline (Cache)":sync==="err"?"❌ Fehler":"⏳"}
+              {sync==="ok"?"✓ Sync":sync==="cache"?"📦 Offline":sync==="err"?"❌ Fehler":"⏳"}
+              {lsGet("hm_key")?" · 🤖":""}
             </span>
             <button onClick={()=>{lsDel("hm_fb");setAktiv(false);setGeladen(false);}}
               style={{fontSize:9,background:"rgba(255,255,255,0.1)",border:"none",color:"rgba(255,255,255,0.7)",padding:"2px 6px",borderRadius:5,cursor:"pointer"}}>
