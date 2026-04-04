@@ -38,8 +38,8 @@ const BEREICHE = [
   {id:"ku", name:"Küche", icon:"🍳", orte:[
     {id:"ku1", name:"Gefrierschrank",  icon:"🧊", info:"Nr. 1 · Küche", nr:1, faecher:makeFaecher(1,4)},
     {id:"ku2", name:"Kühlschrank",     icon:"🥶", info:"Nr. 2 · Küche", nr:2, faecher:makeFaecher(2,5)},
-    {id:"ku3", name:"Vorratsschrank",  icon:"🏺", info:"Mehl · Gewürze · Öle", nr:null, faecher:[]},
-    {id:"ku4", name:"Gemüse-Ablage",   icon:"🥦", info:"Küche", nr:null, faecher:[]},
+    {id:"ku3", name:"Vorratsschrank",  icon:"🏺", info:"Nr. 8 · Mehl/Gewürze/Öle", nr:8, faecher:[]},
+    {id:"ku4", name:"Gemüse-Ablage",   icon:"🥦", info:"Nr. 9 · Küche", nr:9, faecher:[]},
   ]},
   {id:"vr", name:"Vorratsraum", icon:"🏠", orte:[
     {id:"vr1", name:"Samsung Gefrierschrank", icon:"🧊", info:"Nr. 3 · links",  nr:3, faecher:makeFaecher(3,5)},
@@ -49,10 +49,10 @@ const BEREICHE = [
   {id:"ke", name:"Keller", icon:"⬇️", orte:[
     {id:"ke2", name:"Flaschenkühlschrank", icon:"🍾", info:"Nr. 6 · links",  nr:6, faecher:makeFaecher(6,4)},
     {id:"ke1", name:"Gefrierschrank",      icon:"🧊", info:"Nr. 7 · rechts", nr:7, faecher:makeFaecher(7,5)},
-    {id:"ke3", name:"Wasserflaschen",      icon:"💧", info:"Keller", nr:null, faecher:[]},
-    {id:"ke4", name:"Weinflaschen",        icon:"🍷", info:"Keller", nr:null, faecher:[]},
-    {id:"ke5", name:"Sektflaschen",        icon:"🥂", info:"Keller", nr:null, faecher:[]},
-    {id:"ke6", name:"Gemüse & Obst",       icon:"🥔", info:"Kartoffeln · Obst · Rüben", nr:null, faecher:[]},
+    {id:"ke3", name:"Wasserflaschen",      icon:"💧", info:"Nr. 10 · Keller", nr:10, faecher:[]},
+    {id:"ke4", name:"Weinflaschen",        icon:"🍷", info:"Nr. 11 · Keller", nr:11, faecher:[]},
+    {id:"ke5", name:"Sektflaschen",        icon:"🥂", info:"Nr. 12 · Keller", nr:12, faecher:[]},
+    {id:"ke6", name:"Gemüse & Obst",       icon:"🥔", info:"Nr. 13 · Kartoffeln/Obst/Rüben", nr:13, faecher:[]},
   ]},
 ];
 const ALLE_ORTE = BEREICHE.flatMap(b => b.orte.map(o => ({...o, bName:b.name, bId:b.id})));
@@ -571,7 +571,7 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
           </div>
           <div style={{display:"flex",alignItems:"center",gap:5,flexWrap:"wrap"}}>
             <span style={{fontSize:10,fontWeight:700,color:"#9ca3af"}}>EINLEGEN IN SCH.:</span>
-            <SchBtn label="– (keine)" aktiv={neuSch===null} onClick={()=>{setNeuSch(null);neuSchRef.current=null;}} n={0}/>
+            <SchBtn label="– (offen)" aktiv={neuSch===null} onClick={()=>{setNeuSch(null);neuSchRef.current=null;}} n={0}/>
             {(ort.faecher||[]).map(s=>(
               <SchBtn key={s} label={`${s}`} aktiv={neuSch===s} onClick={()=>{setNeuSch(s);neuSchRef.current=s;}} n={0}/>
             ))}
@@ -631,8 +631,8 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
                   <div style={{flex:1}}>
                     <span style={{fontSize:17,fontWeight:700}}>{item.name}</span>
                     <span style={{fontSize:14,color:"#6b7280",marginLeft:6}}>{item.qty} {item.unit}</span>
-                    {item.sch && <span style={{fontSize:13,color:"#3d5c3f",marginLeft:5,background:"#e8f3e8",padding:"2px 7px",borderRadius:6,fontWeight:700}}>#{item.sch}</span>}
-                    <span style={{fontSize:10,color:"#c0c9c0",marginLeft:5}}>✏️</span>
+                    {item.sch ? <span style={{fontSize:14,color:"white",marginLeft:6,background:"#3d5c3f",padding:"2px 9px",borderRadius:6,fontWeight:800}}>#{item.sch}</span> : <span style={{fontSize:11,color:"#d1d5db",marginLeft:4}}>kein Fach</span>}
+                    <span style={{fontSize:10,color:"#c0c9c0",marginLeft:4}}>✏️</span>
                   </div>
                   <span style={{fontSize:10,color:"#d1d5db",marginRight:4,flexShrink:0}}>{item.datum}</span>
                   <button onClick={e=>{e.stopPropagation();onRemove(oId,item.id);}} style={{background:"#fee2e2",border:"none",cursor:"pointer",color:"#dc2626",width:28,height:28,borderRadius:7,fontWeight:700,fontSize:15,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>×</button>
@@ -758,6 +758,7 @@ const EinkaufTab = ({einkauf, onAdd, onToggle, onRemove, onShop, onClear, onUpda
   const wechsel = id => { setGId(id); const g=GRUPPEN.find(x=>x.id===id); setShop(g?.shops[0]||g?.name||""); };
   const defShop = () => { const g=GRUPPEN.find(x=>x.id===gId); return g?.shops.length ? shop : (g?.name||""); };
 
+  const [eToast, setEToast] = useState("");
   const hinzufuegen = async txt => {
     setBusy(true);
     try {
@@ -770,7 +771,10 @@ const EinkaufTab = ({einkauf, onAdd, onToggle, onRemove, onShop, onClear, onUpda
       } catch {
         items = parseText(txt).map(p=>({...p,shop:null}));
       }
-      onAdd(items.map(i=>({...i, shop:i.shop||defShop()})));
+      const shop = defShop();
+      onAdd(items.map(i=>({...i, shop:i.shop||shop})));
+      setEToast(`✓ ${items.length} Artikel → ${shop}`);
+      setTimeout(()=>setEToast(""), 3000);
     } catch(e) { console.error(e); }
     setBusy(false);
   };
@@ -838,6 +842,7 @@ const EinkaufTab = ({einkauf, onAdd, onToggle, onRemove, onShop, onClear, onUpda
           </div>
         </>}
         <EingabeFeld ph="Artikel eingeben… (Komma = mehrere)" onOK={hinzufuegen} onBild={fotoScan} busy={busy}/>
+        {eToast && <div style={{background:"#3d5c3f",color:"white",borderRadius:10,padding:"8px 14px",fontSize:14,fontWeight:700,textAlign:"center",animation:"fadein 0.3s ease",marginTop:4}}>{eToast}</div>}
       </div>
 
       {/* Fortschritt */}
@@ -1178,7 +1183,7 @@ const App = () => {
     // Dann Firebase laden (Sync)
     try {
       const [b,e,k,t] = await Promise.all([fbLesen("bestand"),fbLesen("einkauf"),fbLesen("kassenbons"),fbLesen("todos")]);
-      if(b && typeof b==="object") setBestand(b);
+      if(b && typeof b==="object") { setBestand(b); if(bestandRef) bestandRef.current=b; }
       if(e) setEinkauf(Array.isArray(e)?e:Object.values(e));
       if(k) setKassenbons(Array.isArray(k)?k:Object.values(k));
       if(t) setTodos(Array.isArray(t)?t:Object.values(t));
@@ -1204,8 +1209,19 @@ const App = () => {
     setSync("ok"); writing.current=false;
   }, []);
 
-  const addBestand = (id,items) => setBestand(p=>{const n={...p,[id]:[...(p[id]||[]),...items.map(i=>({...i,id:uid(),datum:datum()}))]};speichern("bestand",n);return n;});
-  const remBestand = (id,iid) => setBestand(p=>{const n={...p,[id]:(p[id]||[]).filter(i=>i.id!==iid)};speichern("bestand",n);return n;});
+  const bestandRef = useRef({});
+  const addBestand = (id,items) => setBestand(p=>{
+    const n={...p,[id]:[...(p[id]||[]),...items.map(i=>({...i,id:uid(),datum:datum()}))]};
+    bestandRef.current=n;
+    speichern("bestand",n);
+    return n;
+  });
+  const remBestand = (id,iid) => setBestand(p=>{
+    const n={...p,[id]:(p[id]||[]).filter(i=>i.id!==iid)};
+    bestandRef.current=n;
+    speichern("bestand",n);
+    return n;
+  });
   const addEinkauf = items => setEinkauf(p=>{const n=[...p,...items.map(i=>({...i,id:uid(),erledigt:false,datum:datum()}))];speichern("einkauf",n);return n;});
   const togEinkauf = id => setEinkauf(p=>{const n=p.map(i=>i.id===id?{...i,erledigt:!i.erledigt}:i);speichern("einkauf",n);return n;});
   const remEinkauf = id => setEinkauf(p=>{const n=p.filter(i=>i.id!==id);speichern("einkauf",n);return n;});
