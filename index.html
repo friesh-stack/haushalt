@@ -284,7 +284,7 @@ const Einrichtung = ({onStart}) => {
     onStart();
   };
   return (
-    <div style={{maxWidth:500,margin:"0 auto",minHeight:"100vh",background:"#f5f5f0"}}>
+    <div style={{width:"100%",minHeight:"100vh",background:"#f5f5f0"}}>
       <div style={{background:"linear-gradient(135deg,#2c3e2d,#3d5c3f)",padding:"20px",color:"white"}}>
         <h1 style={{margin:0,fontSize:22,fontWeight:800}}>🏠 Haushalt Manager</h1>
         <p style={{margin:"4px 0 0",fontSize:13,opacity:0.8}}>Einrichtung</p>
@@ -368,7 +368,7 @@ const FotoVorschau = ({bild, erkannt, ortName, faecher, neuSch, onBestaetigen, o
   const hinzufuegen = () => setItems(p=>[...p,{name:"",qty:1,unit:"Stück",sch:neuSch||null,_id:Date.now()}]);
 
   return (
-    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,display:"flex",flexDirection:"column",maxWidth:500,margin:"0 auto"}}>
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,display:"flex",flexDirection:"column",width:"100%"}}>
       <div style={{background:"#2c3e2d",padding:"12px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
         <span style={{color:"white",fontWeight:800,fontSize:16}}>📷 Foto-Erkennung prüfen</span>
         <button onClick={onAbbrechen} style={{background:"rgba(255,255,255,0.2)",border:"none",color:"white",borderRadius:8,padding:"4px 10px",cursor:"pointer",fontSize:14}}>✕</button>
@@ -691,28 +691,114 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
   );
 };
 
-// ── EINKAUF-ARTIKEL (editierbar) ─────────────────────────
-const EinkaufArtikel = ({item, onToggle, onRemove, onShop, onUpdate, isLast}) => {
-  const [edit, setEdit] = useState(false);
+// ── EINKAUF-ARTIKEL (editierbar + einlagern) ─────────────
+const EinkaufArtikel = ({item, onToggle, onRemove, onShop, onUpdate, onEinlagern, bestand, isLast}) => {
+  const [modus, setModus] = useState(null); // null | "edit" | "einlagern"
   const [val, setVal] = useState({});
+  const [gewOrt, setGewOrt] = useState(null);
+  const [gewSch, setGewSch] = useState(null);
 
-  const oeffnen = () => { if(item.erledigt) return; setEdit(true); setVal({name:item.name,qty:item.qty,unit:item.unit}); };
-  const speichern = () => { onUpdate(item.id, val); setEdit(false); };
+  // Ähnliche Artikel im Bestand finden
+  const findeAehnlich = () => {
+    const name = item.name.toLowerCase();
+    const treffer = [];
+    ALLE_ORTE.forEach(ort => {
+      const items = bestand[ort.id] || [];
+      items.forEach(i => {
+        if(i.name.toLowerCase().includes(name.slice(0,4)) || name.includes(i.name.toLowerCase().slice(0,4))) {
+          treffer.push({ort, sch:i.sch});
+        }
+      });
+    });
+    return treffer;
+  };
 
-  if(edit) return (
+  const aehnlich = findeAehnlich();
+  const gewOrtObj = ALLE_ORTE.find(o=>o.id===gewOrt);
+
+  const oeffnen = () => {
+    if(item.erledigt) return;
+    setModus("einlagern");
+    setGewOrt(aehnlich[0]?.ort.id || null);
+    setGewSch(aehnlich[0]?.sch || null);
+  };
+
+  // EINLAGERN-MODUS
+  if(modus==="einlagern") return (
+    <div style={{background:"#f0f9f0",borderBottom:isLast?"none":"1px solid #e5e7eb",padding:"12px"}}>
+      <div style={{fontWeight:800,fontSize:16,marginBottom:8,color:"#2c3e2d"}}>
+        📦 {item.name} einlagern
+        <span style={{fontSize:13,color:"#6b7280",fontWeight:400,marginLeft:6}}>{item.qty} {item.unit}</span>
+      </div>
+      {aehnlich.length>0 && (
+        <div style={{background:"#e8f3e8",borderRadius:8,padding:"6px 10px",fontSize:12,color:"#3d5c3f",marginBottom:8,fontWeight:600}}>
+          💡 Ähnlich vorhanden: {[...new Set(aehnlich.map(a=>a.ort.name))].join(", ")}
+        </div>
+      )}
+      {/* Bereich-Tabs */}
+      <div style={{display:"flex",gap:5,marginBottom:8,flexWrap:"wrap"}}>
+        {BEREICHE.map(b=>(
+          <button key={b.id} onClick={()=>{setGewOrt(b.orte[0].id);setGewSch(null);}}
+            style={{padding:"5px 10px",borderRadius:8,border:"2px solid",fontSize:12,cursor:"pointer",fontWeight:700,
+              borderColor:gewOrtObj?.bId===b.id?"#3d5c3f":"#e5e7eb",
+              background:gewOrtObj?.bId===b.id?"#3d5c3f":"white",
+              color:gewOrtObj?.bId===b.id?"white":"#374151"}}>
+            {b.icon} {b.name}
+          </button>
+        ))}
+      </div>
+      {/* Ort-Auswahl */}
+      <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:8}}>
+        {BEREICHE.find(b=>b.id===(gewOrtObj?.bId||"ku"))?.orte.map(o=>(
+          <button key={o.id} onClick={()=>{setGewOrt(o.id);setGewSch(null);}}
+            style={{padding:"4px 9px",borderRadius:20,border:"2px solid",fontSize:12,cursor:"pointer",fontWeight:gewOrt===o.id?700:400,
+              borderColor:gewOrt===o.id?"#3d5c3f":"#e5e7eb",
+              background:gewOrt===o.id?"#f0f4f1":"white",color:"#374151",
+              display:"flex",alignItems:"center",gap:3}}>
+            {o.nr&&<span style={{background:"#3d5c3f",color:"white",borderRadius:"50%",width:16,height:16,display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800}}>{o.nr}</span>}
+            {o.icon} {o.name}
+          </button>
+        ))}
+      </div>
+      {/* Schubladen */}
+      {(gewOrtObj?.faecher||[]).length>0 && (
+        <div style={{marginBottom:8}}>
+          <div style={{fontSize:11,fontWeight:700,color:"#9ca3af",marginBottom:4}}>SCHUBLADE:</div>
+          <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
+            <SchBtn label="– keine" aktiv={gewSch===null} onClick={()=>setGewSch(null)} n={0}/>
+            {(gewOrtObj.faecher||[]).map(s=>(
+              <SchBtn key={s} label={`${s}`} aktiv={gewSch===s} onClick={()=>setGewSch(Number(s))} n={0}/>
+            ))}
+          </div>
+          {gewSch&&<div style={{fontSize:12,color:"white",background:"#e53e3e",padding:"3px 10px",borderRadius:6,fontWeight:800,marginTop:4,display:"inline-block"}}>✓ Schublade {gewSch}</div>}
+        </div>
+      )}
+      <div style={{display:"flex",gap:6}}>
+        <button onClick={()=>{if(gewOrt){onEinlagern(item,gewOrt,gewSch);setModus(null);}else alert("Bitte Lagerort wählen!");}}
+          style={{flex:2,padding:"11px",background:"#3d5c3f",color:"white",border:"none",borderRadius:8,cursor:"pointer",fontWeight:800,fontSize:15}}>
+          ✅ Einlagern
+        </button>
+        <button onClick={()=>setModus("edit")} style={{flex:1,padding:"11px",background:"#f59e0b",color:"white",border:"none",borderRadius:8,cursor:"pointer",fontWeight:700,fontSize:14}}>✏️ Edit</button>
+        <button onClick={()=>setModus(null)} style={{padding:"11px 12px",background:"#e5e7eb",color:"#374151",border:"none",borderRadius:8,cursor:"pointer",fontSize:15}}>✕</button>
+      </div>
+    </div>
+  );
+
+  // EDIT-MODUS
+  if(modus==="edit") return (
     <div style={{padding:"10px 12px",background:"#fff9e6",borderBottom:isLast?"none":"1px solid #e5e7eb"}}>
       <div style={{display:"flex",gap:6,marginBottom:6}}>
-        <input value={val.name} onChange={e=>setVal(p=>({...p,name:e.target.value}))} autoFocus
+        <input value={val.name??item.name} onChange={e=>setVal(p=>({...p,name:e.target.value}))} autoFocus
           style={{flex:1,padding:"8px 10px",borderRadius:8,border:"2px solid #f59e0b",fontSize:16,outline:"none"}}/>
         <VoiceBtn onResult={txt=>setVal(p=>({...p,name:txt.trim()}))}/>
       </div>
       <div style={{display:"flex",gap:6,marginBottom:6}}>
-        <input type="number" value={val.qty}
+        <input type="number" value={val.qty??item.qty}
           onChange={e=>setVal(p=>({...p,qty:e.target.value}))}
           onFocus={e=>e.target.select()}
           onBlur={e=>setVal(p=>({...p,qty:parseFloat(e.target.value)||1}))}
           style={{width:65,padding:"7px 8px",borderRadius:8,border:"1.5px solid #e5e7eb",fontSize:15,outline:"none"}}/>
-        <select value={val.unit} onChange={e=>setVal(p=>({...p,unit:e.target.value}))}
+        <select value={val.unit??item.unit} onChange={e=>setVal(p=>({...p,unit:e.target.value}))}
           style={{flex:1,padding:"7px 8px",borderRadius:8,border:"1.5px solid #e5e7eb",fontSize:15,outline:"none"}}>
           {["Stück","kg","g","L","ml","Packung","Flasche","Dose","Glas","Beutel","Kasten"].map(u=><option key={u}>{u}</option>)}
         </select>
@@ -722,22 +808,24 @@ const EinkaufArtikel = ({item, onToggle, onRemove, onShop, onUpdate, isLast}) =>
         </select>
       </div>
       <div style={{display:"flex",gap:6}}>
-        <button onClick={speichern} style={{flex:1,padding:"9px",background:"#f59e0b",color:"white",border:"none",borderRadius:8,cursor:"pointer",fontWeight:800,fontSize:15}}>✓ Speichern</button>
-        <button onClick={()=>setEdit(false)} style={{padding:"9px 14px",background:"#e5e7eb",color:"#374151",border:"none",borderRadius:8,cursor:"pointer",fontSize:15}}>✕</button>
+        <button onClick={()=>{onUpdate(item.id,{name:val.name??item.name,qty:val.qty??item.qty,unit:val.unit??item.unit});setModus(null);}}
+          style={{flex:1,padding:"9px",background:"#f59e0b",color:"white",border:"none",borderRadius:8,cursor:"pointer",fontWeight:800,fontSize:15}}>✓ Speichern</button>
+        <button onClick={()=>setModus(null)} style={{padding:"9px 14px",background:"#e5e7eb",color:"#374151",border:"none",borderRadius:8,cursor:"pointer",fontSize:15}}>✕</button>
       </div>
     </div>
   );
 
+  // NORMAL-ANSICHT
   return (
     <div style={{display:"flex",alignItems:"center",padding:"10px 12px",borderBottom:isLast?"none":"1px solid #f3f4f6",opacity:item.erledigt?0.4:1,gap:8}}>
       <input type="checkbox" checked={item.erledigt} onChange={()=>onToggle(item.id)} style={{width:18,height:18,cursor:"pointer",accentColor:"#3d5c3f",flexShrink:0}}/>
-      <div style={{flex:1,textDecoration:item.erledigt?"line-through":"none",cursor:item.erledigt?"default":"pointer"}} onClick={oeffnen}>
-        <span style={{fontSize:17,fontWeight:700}}>{item.name}</span>
+      <div style={{flex:1,cursor:item.erledigt?"default":"pointer"}} onClick={oeffnen}>
+        <span style={{fontSize:17,fontWeight:700,textDecoration:item.erledigt?"line-through":"none"}}>{item.name}</span>
         <span style={{fontSize:14,color:"#6b7280",marginLeft:6}}>{item.qty} {item.unit}</span>
-        {!item.erledigt && <span style={{fontSize:10,color:"#c0c0c0",marginLeft:5}}>✏️</span>}
+        {!item.erledigt && <span style={{fontSize:11,color:"#3d5c3f",marginLeft:5}}>→ einlagern</span>}
         {item.datum && <div style={{fontSize:10,color:"#d1d5db"}}>📅 {item.datum}</div>}
       </div>
-      <select value={item.shop||""} onChange={e=>onShop(item.id,e.target.value)} style={{fontSize:11,border:"1px solid #e5e7eb",borderRadius:6,padding:"2px",maxWidth:72}}>
+      <select value={item.shop||""} onChange={e=>onShop(item.id,e.target.value)} style={{fontSize:11,border:"1px solid #e5e7eb",borderRadius:6,padding:"2px",maxWidth:68,flexShrink:0}}>
         {ALLE_SHOPS.map(s=><option key={s} value={s}>{s}</option>)}
       </select>
       <button onClick={()=>onRemove(item.id)} style={{background:"#fee2e2",border:"none",cursor:"pointer",color:"#dc2626",width:28,height:28,borderRadius:6,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,flexShrink:0}}>×</button>
@@ -746,7 +834,7 @@ const EinkaufArtikel = ({item, onToggle, onRemove, onShop, onUpdate, isLast}) =>
 };
 
 // ── EINKAUF TAB ───────────────────────────────────────────
-const EinkaufTab = ({einkauf, onAdd, onToggle, onRemove, onShop, onClear, onUpdate}) => {
+const EinkaufTab = ({einkauf, onAdd, onToggle, onRemove, onShop, onClear, onUpdate, onEinlagern, bestand}) => {
   const [gId, setGId] = useState("sm");
   const [shop, setShop] = useState("Kaufland");
   const [busy, setBusy] = useState(false);
@@ -878,7 +966,7 @@ const EinkaufTab = ({einkauf, onAdd, onToggle, onRemove, onShop, onClear, onUpda
                 <span style={{color:f.fg,fontSize:11,background:"rgba(0,0,0,0.18)",padding:"2px 7px",borderRadius:10}}>{d}/{items.length}</span>
               </div>
               {items.map((item,i) => (
-                <EinkaufArtikel key={item.id} item={item} onToggle={onToggle} onRemove={onRemove} onShop={onShop} onUpdate={onUpdate} isLast={i===items.length-1}/>
+                <EinkaufArtikel key={item.id} item={item} onToggle={onToggle} onRemove={onRemove} onShop={onShop} onUpdate={onUpdate} onEinlagern={onEinlagern} bestand={bestand||{}} isLast={i===items.length-1}/>
               ))}
             </div>
           );
@@ -1226,6 +1314,12 @@ const App = () => {
   const remEinkauf = id => setEinkauf(p=>{const n=p.filter(i=>i.id!==id);speichern("einkauf",n);return n;});
   const shopEinkauf = (id,s) => setEinkauf(p=>{const n=p.map(i=>i.id===id?{...i,shop:s}:i);speichern("einkauf",n);return n;});
   const updateEinkauf = (id,felder) => setEinkauf(p=>{const n=p.map(i=>i.id===id?{...i,...felder}:i);speichern("einkauf",n);return n;});
+  const einlagern = (item, ortId, sch) => {
+    // Artikel in Bestand hinzufügen
+    addBestand(ortId, [{name:item.name, qty:item.qty, unit:item.unit, sch: sch ?? null}]);
+    // Als erledigt markieren in Einkaufsliste
+    setEinkauf(p=>{const n=p.map(i=>i.id===item.id?{...i,erledigt:true}:i);speichern("einkauf",n);return n;});
+  };
   const clearEinkauf = () => setEinkauf(p=>{const n=p.filter(i=>!i.erledigt);speichern("einkauf",n);return n;});
   const addTodo = (txt,pr) => setTodos(p=>{const n=[{id:uid(),text:txt,prioritaet:pr,erledigt:false,datum:datum()},...p];speichern("todos",n);return n;});
   const togTodo = id => setTodos(p=>{const n=p.map(t=>t.id===id?{...t,erledigt:!t.erledigt}:t);speichern("todos",n);return n;});
@@ -1235,7 +1329,7 @@ const App = () => {
   if(!aktiv) return <Einrichtung onStart={()=>setAktiv(true)}/>;
 
   if(!geladen) return (
-    <div style={{maxWidth:500,margin:"0 auto",minHeight:"100vh",background:"#f5f5f0",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:12,color:"#6b7280"}}>
+    <div style={{width:"100%",minHeight:"100vh",background:"#f5f5f0",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:12,color:"#6b7280"}}>
       <span style={{fontSize:36,animation:"spin 1s linear infinite",display:"inline-block"}}>🔄</span>
       <p style={{margin:0,fontSize:14,fontWeight:600}}>Lade Daten…</p>
     </div>
@@ -1248,7 +1342,7 @@ const App = () => {
   const sC = sync==="ok"?"#4ade80":sync==="err"?"#f87171":"#fbbf24";
 
   return (
-    <div style={{fontFamily:"'Segoe UI',system-ui,sans-serif",maxWidth:500,margin:"0 auto",height:"100%",minHeight:"100vh",background:"#f5f5f0",display:"flex",flexDirection:"column"}}>
+    <div style={{fontFamily:"'Segoe UI',system-ui,sans-serif",width:"100%",minHeight:"100vh",background:"#f5f5f0",display:"flex",flexDirection:"column"}}>
       <div style={{background:"linear-gradient(135deg,#2c3e2d,#3d5c3f)",padding:"14px 18px 10px",color:"white"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
           <h1 style={{margin:0,fontSize:19,fontWeight:800}}>🏠 Haushalt Manager</h1>
@@ -1271,7 +1365,7 @@ const App = () => {
 
       <div style={{padding:12,flex:"1 1 auto",overflowY:"auto"}}>
         {tab==="bestand"    && <BestandTab bestand={bestand} onAdd={addBestand} onRemove={remBestand}/>}
-        {tab==="einkauf"    && <EinkaufTab einkauf={einkauf} onAdd={addEinkauf} onToggle={togEinkauf} onRemove={remEinkauf} onShop={shopEinkauf} onClear={clearEinkauf} onUpdate={updateEinkauf}/>}
+        {tab==="einkauf"    && <EinkaufTab einkauf={einkauf} onAdd={addEinkauf} onToggle={togEinkauf} onRemove={remEinkauf} onShop={shopEinkauf} onClear={clearEinkauf} onUpdate={updateEinkauf} onEinlagern={einlagern} bestand={bestand}/>}
         {tab==="uebersicht" && <UebersichtTab bestand={bestand} einkauf={einkauf} kassenbons={kassenbons} todos={todos}/>}
         {tab==="kassenbon"  && <KassenbonTab kassenbons={kassenbons} setKassenbons={setKFn} onAddEinkauf={addEinkauf}/>}
         {tab==="suche"      && <SucheTab bestand={bestand}/>}
