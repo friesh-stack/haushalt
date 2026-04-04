@@ -566,16 +566,20 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
             <span style={{fontSize:10,fontWeight:700,color:"#9ca3af"}}>ANZEIGEN:</span>
             <SchBtn label="Alle" aktiv={filtSch===null} onClick={()=>setFiltSch(null)} n={alleItems.length}/>
             {(ort.faecher||[]).map(s=>(
-              <SchBtn key={s} label={`Nr. ${s}`} aktiv={filtSch===s} onClick={()=>setFiltSch(s)} n={alleItems.filter(i=>i.sch===s).length}/>
+              <SchBtn key={s} label={`Nr. ${s}`} aktiv={filtSch===s} onClick={()=>setFiltSch(Number(s))} n={alleItems.filter(i=>Number(i.sch)===Number(s)).length}/>
             ))}
           </div>
           <div style={{display:"flex",alignItems:"center",gap:5,flexWrap:"wrap"}}>
             <span style={{fontSize:10,fontWeight:700,color:"#9ca3af"}}>EINLEGEN IN SCH.:</span>
             <SchBtn label="– (offen)" aktiv={neuSch===null} onClick={()=>{setNeuSch(null);neuSchRef.current=null;}} n={0}/>
             {(ort.faecher||[]).map(s=>(
-              <SchBtn key={s} label={`${s}`} aktiv={neuSch===s} onClick={()=>{setNeuSch(s);neuSchRef.current=s;}} n={0}/>
+              <SchBtn key={s} label={`${s}`} aktiv={neuSch===s} onClick={()=>{const n=Number(s);setNeuSch(n);neuSchRef.current=n;}} n={0}/>
             ))}
-            {neuSch!==null && <span style={{fontSize:12,color:"white",fontWeight:800,background:"#3d5c3f",padding:"3px 10px",borderRadius:8}}>→ Schublade {neuSch} aktiv</span>}
+            {neuSch!==null && (
+              <span style={{fontSize:13,color:"white",fontWeight:800,background:"#e53e3e",padding:"4px 12px",borderRadius:8,display:"inline-block"}}>
+                ✓ Schublade {neuSch} gewählt
+              </span>
+            )}
           </div>
         </div>
       )}
@@ -631,7 +635,9 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
                   <div style={{flex:1}}>
                     <span style={{fontSize:17,fontWeight:700}}>{item.name}</span>
                     <span style={{fontSize:14,color:"#6b7280",marginLeft:6}}>{item.qty} {item.unit}</span>
-                    {item.sch ? <span style={{fontSize:14,color:"white",marginLeft:6,background:"#3d5c3f",padding:"2px 9px",borderRadius:6,fontWeight:800}}>#{item.sch}</span> : <span style={{fontSize:11,color:"#d1d5db",marginLeft:4}}>kein Fach</span>}
+                    {item.sch != null && item.sch !== "" && item.sch !== 0
+                      ? <span style={{fontSize:14,color:"white",marginLeft:6,background:"#3d5c3f",padding:"3px 9px",borderRadius:6,fontWeight:800}}>#{item.sch}</span>
+                      : null}
                     <span style={{fontSize:10,color:"#c0c9c0",marginLeft:4}}>✏️</span>
                   </div>
                   <span style={{fontSize:10,color:"#d1d5db",marginRight:4,flexShrink:0}}>{item.datum}</span>
@@ -1196,17 +1202,18 @@ const App = () => {
   useEffect(() => {
     if(!aktiv) return;
     const iv = setInterval(() => {
-      if(!writing.current && (Date.now() - (letzterWrite?.current||0)) > 15000) laden(true);
+      if(!writing.current) laden(true);
     }, 8000);
     return () => clearInterval(iv);
   }, [aktiv, laden]);
 
-  const letzterWrite = useRef(0);
   const speichern = useCallback(async (path, data) => {
     writing.current=true; setSync("syncing");
-    letzterWrite.current = Date.now();
+    writing.current = true; // keep blocking poll
     await fbSchreiben(path, data);
-    setSync("ok"); writing.current=false;
+    setSync("ok");
+    // Keep writing=true for 15s to prevent poll from overwriting
+    setTimeout(() => { writing.current = false; }, 15000);
   }, []);
 
   const bestandRef = useRef({});
