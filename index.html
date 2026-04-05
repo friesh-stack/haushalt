@@ -36,23 +36,23 @@ function makeFaecher(ortNr, anzahl) {
 
 const BEREICHE = [
   {id:"ku", name:"Küche", icon:"🍳", orte:[
-    {id:"ku1", name:"Küche Gefrierschrank",  icon:"🧊", info:"Nr. 1", nr:1, faecher:makeFaecher(1,4)},
-    {id:"ku2", name:"Küche Kühlschrank",     icon:"🥶", info:"Nr. 2", nr:2, faecher:makeFaecher(2,5)},
-    {id:"ku3", name:"Küche Vorratsschrank",  icon:"🏺", info:"Nr. 8 · Mehl/Gewürze/Öle", nr:8, faecher:[]},
-    {id:"ku4", name:"Küche Gemüse-Ablage",   icon:"🥦", info:"Nr. 9", nr:9, faecher:[]},
+    {id:"ku1", name:"Gefrierschrank",  icon:"🧊", info:"Nr. 1 · Küche", nr:1, faecher:makeFaecher(1,4)},
+    {id:"ku2", name:"Kühlschrank",     icon:"🥶", info:"Nr. 2 · Küche", nr:2, faecher:makeFaecher(2,5)},
+    {id:"ku3", name:"Vorratsschrank",  icon:"🏺", info:"Nr. 8 · Mehl/Gewürze/Öle", nr:8, faecher:[]},
+    {id:"ku4", name:"Gemüse-Ablage",   icon:"🥦", info:"Nr. 9 · Küche", nr:9, faecher:[]},
   ]},
   {id:"vr", name:"Vorratsraum", icon:"🏠", orte:[
-    {id:"vr1", name:"Vorratsraum Samsung Gefrierschrank", icon:"🧊", info:"Nr. 3 · links",  nr:3, faecher:makeFaecher(3,5)},
-    {id:"vr2", name:"Vorratsraum Gefrierschrank",          icon:"❄️", info:"Nr. 4 · rechts", nr:4, faecher:makeFaecher(4,5)},
-    {id:"vr3", name:"Vorratsraum Kühlschrank",             icon:"🥶", info:"Nr. 5 · rechts", nr:5, faecher:makeFaecher(5,5)},
+    {id:"vr1", name:"Samsung Gefrierschrank", icon:"🧊", info:"Nr. 3 · links",  nr:3, faecher:makeFaecher(3,5)},
+    {id:"vr2", name:"Gefrierschrank",          icon:"❄️", info:"Nr. 4 · rechts", nr:4, faecher:makeFaecher(4,5)},
+    {id:"vr3", name:"Kühlschrank",             icon:"🥶", info:"Nr. 5 · rechts", nr:5, faecher:makeFaecher(5,5)},
   ]},
   {id:"ke", name:"Keller", icon:"⬇️", orte:[
-    {id:"ke2", name:"Keller Flaschenkühlschrank", icon:"🍾", info:"Nr. 6 · links",  nr:6, faecher:makeFaecher(6,4)},
-    {id:"ke1", name:"Keller Gefrierschrank",      icon:"🧊", info:"Nr. 7 · rechts", nr:7, faecher:makeFaecher(7,5)},
-    {id:"ke3", name:"Keller Wasserflaschen",      icon:"💧", info:"Nr. 10", nr:10, faecher:[]},
-    {id:"ke4", name:"Keller Weinflaschen",        icon:"🍷", info:"Nr. 11", nr:11, faecher:[]},
-    {id:"ke5", name:"Keller Sektflaschen",        icon:"🥂", info:"Nr. 12", nr:12, faecher:[]},
-    {id:"ke6", name:"Keller Gemüse & Obst",       icon:"🥔", info:"Nr. 13 · Kartoffeln/Obst/Rüben", nr:13, faecher:[]},
+    {id:"ke2", name:"Flaschenkühlschrank", icon:"🍾", info:"Nr. 6 · links",  nr:6, faecher:makeFaecher(6,4)},
+    {id:"ke1", name:"Gefrierschrank",      icon:"🧊", info:"Nr. 7 · rechts", nr:7, faecher:makeFaecher(7,5)},
+    {id:"ke3", name:"Wasserflaschen",      icon:"💧", info:"Nr. 10 · Keller", nr:10, faecher:[]},
+    {id:"ke4", name:"Weinflaschen",        icon:"🍷", info:"Nr. 11 · Keller", nr:11, faecher:[]},
+    {id:"ke5", name:"Sektflaschen",        icon:"🥂", info:"Nr. 12 · Keller", nr:12, faecher:[]},
+    {id:"ke6", name:"Gemüse & Obst",       icon:"🥔", info:"Nr. 13 · Kartoffeln/Obst/Rüben", nr:13, faecher:[]},
   ]},
 ];
 const ALLE_ORTE = BEREICHE.flatMap(b => b.orte.map(o => ({...o, bName:b.name, bId:b.id})));
