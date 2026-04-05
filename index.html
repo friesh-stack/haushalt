@@ -17,7 +17,7 @@ input,button,select{font-family:inherit;}
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const {useState,useEffect,useRef,useCallback} = React;
+console.log("Script starts v6"); const {useState,useEffect,useRef,useCallback} = React;
 
 // ── Lagerorte ─────────────────────────────────────────────
 function makeFaecher(nr, n) { return Array.from({length:n},(_,i)=>nr*10+(i+1)); }
@@ -805,7 +805,16 @@ const App = () => {
   );
 };
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+// Error boundary
+class EB extends React.Component {
+  constructor(p){super(p);this.state={e:null};}
+  componentDidCatch(e){this.setState({e:e.message+"|"+e.stack?.slice(0,200)});}
+  render(){
+    if(this.state.e) return <div style={{padding:20,color:"red",fontSize:16,whiteSpace:"pre-wrap",wordBreak:"break-all"}}>FEHLER: {this.state.e}</div>;
+    return this.props.children;
+  }
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<EB><App/></EB>);
 </script>
 </body>
 </html>
