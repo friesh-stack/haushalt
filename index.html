@@ -3,26 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>🥒 Haushalt Manager</title>
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F952;</text></svg>">
-<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxODAgMTgwIj48cmVjdCB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgcng9IjQwIiBmaWxsPSIjMmMzZTJkIi8+PHRleHQgeD0iOTAiIHk9IjEzNSIgZm9udC1zaXplPSIxMTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcHBsZSBDb2xvciBFbW9qaSxTZWdvZSBVSSBFbW9qaSxzYW5zLXNlcmlmIj4mI3gxRjk1Mjs8L3RleHQ+PC9zdmc+">
-<meta name="apple-mobile-web-app-title" content="Haushalt">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#3d5c3f">
+<title>🏠 Haushalt Manager</title>
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-html,body{height:100%;}
-body{font-family:'Segoe UI',system-ui,sans-serif;background:#f5f5f0;font-size:18px;}
-input,button,select{font-family:inherit;font-size:18px;}
-#root{height:100%;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#f5f5f0;}
+input,button,select{font-family:inherit;}
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 </style>
 </head>
 <body>
@@ -30,31 +19,28 @@ input,button,select{font-family:inherit;font-size:18px;}
 <script type="text/babel">
 const {useState,useEffect,useRef,useCallback} = React;
 
-// ── Lagerorte mit Nummerierungssystem ─────────────────────
-// Schubladen: Nr. des Orts + Fach-Nr. (z.B. Ort 1 → 11,12,13,14)
-function makeFaecher(ortNr, anzahl) {
-  return Array.from({length:anzahl}, (_,i) => ortNr*10 + (i+1));
-}
+// ── Lagerorte ─────────────────────────────────────────────
+function makeFaecher(nr, n) { return Array.from({length:n},(_,i)=>nr*10+(i+1)); }
 
 const BEREICHE = [
   {id:"ku", name:"Küche", icon:"🍳", orte:[
-    {id:"ku1", name:"Küche Gefrierschrank",  icon:"🧊", info:"Nr. 1", nr:1, faecher:makeFaecher(1,4)},
-    {id:"ku2", name:"Küche Kühlschrank",     icon:"🥶", info:"Nr. 2", nr:2, faecher:makeFaecher(2,5)},
-    {id:"ku3", name:"Küche Vorratsschrank",  icon:"🏺", info:"Nr. 8 · Mehl/Gewürze/Öle", nr:8, faecher:[]},
-    {id:"ku4", name:"Küche Gemüse-Ablage",   icon:"🥦", info:"Nr. 9", nr:9, faecher:[]},
+    {id:"ku1", name:"Küche Gefrierschrank",  icon:"🧊", info:"Nr.1", nr:1, faecher:makeFaecher(1,4)},
+    {id:"ku2", name:"Küche Kühlschrank",     icon:"🥶", info:"Nr.2", nr:2, faecher:makeFaecher(2,5)},
+    {id:"ku3", name:"Küche Vorratsschrank",  icon:"🏺", info:"Nr.8", nr:8, faecher:[]},
+    {id:"ku4", name:"Küche Gemüse-Ablage",   icon:"🥦", info:"Nr.9", nr:9, faecher:[]},
   ]},
   {id:"vr", name:"Vorratsraum", icon:"🏠", orte:[
-    {id:"vr1", name:"Vorratsraum Samsung Gefrierschrank", icon:"🧊", info:"Nr. 3 · links",  nr:3, faecher:makeFaecher(3,5)},
-    {id:"vr2", name:"Vorratsraum Gefrierschrank",          icon:"❄️", info:"Nr. 4 · rechts", nr:4, faecher:makeFaecher(4,5)},
-    {id:"vr3", name:"Vorratsraum Kühlschrank",             icon:"🥶", info:"Nr. 5 · rechts", nr:5, faecher:makeFaecher(5,5)},
+    {id:"vr1", name:"Vorratsraum Samsung Gefrierschrank", icon:"🧊", info:"Nr.3 links",  nr:3, faecher:makeFaecher(3,5)},
+    {id:"vr2", name:"Vorratsraum Gefrierschrank",          icon:"❄️", info:"Nr.4 rechts", nr:4, faecher:makeFaecher(4,5)},
+    {id:"vr3", name:"Vorratsraum Kühlschrank",             icon:"🥶", info:"Nr.5 rechts", nr:5, faecher:makeFaecher(5,5)},
   ]},
   {id:"ke", name:"Keller", icon:"⬇️", orte:[
-    {id:"ke2", name:"Keller Flaschenkühlschrank", icon:"🍾", info:"Nr. 6 · links",  nr:6, faecher:makeFaecher(6,4)},
-    {id:"ke1", name:"Keller Gefrierschrank",      icon:"🧊", info:"Nr. 7 · rechts", nr:7, faecher:makeFaecher(7,5)},
-    {id:"ke3", name:"Keller Wasserflaschen",      icon:"💧", info:"Nr. 10", nr:10, faecher:[]},
-    {id:"ke4", name:"Keller Weinflaschen",        icon:"🍷", info:"Nr. 11", nr:11, faecher:[]},
-    {id:"ke5", name:"Keller Sektflaschen",        icon:"🥂", info:"Nr. 12", nr:12, faecher:[]},
-    {id:"ke6", name:"Keller Gemüse & Obst",       icon:"🥔", info:"Nr. 13 · Kartoffeln/Obst/Rüben", nr:13, faecher:[]},
+    {id:"ke2", name:"Keller Flaschenkühlschrank", icon:"🍾", info:"Nr.6 links",  nr:6, faecher:makeFaecher(6,4)},
+    {id:"ke1", name:"Keller Gefrierschrank",      icon:"🧊", info:"Nr.7 rechts", nr:7, faecher:makeFaecher(7,5)},
+    {id:"ke3", name:"Keller Wasserflaschen",      icon:"💧", info:"Nr.10", nr:10, faecher:[]},
+    {id:"ke4", name:"Keller Weinflaschen",        icon:"🍷", info:"Nr.11", nr:11, faecher:[]},
+    {id:"ke5", name:"Keller Sektflaschen",        icon:"🥂", info:"Nr.12", nr:12, faecher:[]},
+    {id:"ke6", name:"Keller Gemüse & Obst",       icon:"🥔", info:"Nr.13", nr:13, faecher:[]},
   ]},
 ];
 const ALLE_ORTE = BEREICHE.flatMap(b => b.orte.map(o => ({...o, bName:b.name, bId:b.id})));
@@ -104,7 +90,7 @@ function parseText(text) {
 // ── Claude API ────────────────────────────────────────────
 async function claudeCall(messages, system) {
   const key = lsGet("hm_key");
-  if (!key) throw new Error("KEIN_KEY");
+  if (!key) throw new Error("kein key");
   const r = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -113,43 +99,21 @@ async function claudeCall(messages, system) {
       "anthropic-version": "2023-06-01",
       "anthropic-dangerous-direct-browser-access": "true"
     },
-    body: JSON.stringify({model:"claude-haiku-4-5-20251001", max_tokens:2000, system, messages})
+    body: JSON.stringify({model:"claude-haiku-4-5-20251001", max_tokens:800, system, messages})
   });
-  if (!r.ok) {
-    const err = await r.json().catch(()=>({}));
-    throw new Error(err?.error?.message || "HTTP " + r.status);
-  }
   const d = await r.json();
   if (d.error) throw new Error(d.error.message);
   const t = d.content?.[0]?.text || "";
-  const clean = t.replace(/```json|```/g,"").trim();
-  try { return JSON.parse(clean); }
-  catch { throw new Error("JSON Parse Fehler: " + clean.slice(0,100)); }
+  return JSON.parse(t.replace(/```json|```/g,"").trim());
 }
-
-// ── Lokaler Cache (Offline-Backup) ────────────────────────
-const cacheKey = path => "hm_cache_" + path;
-const cacheSet = (path, data) => { try { localStorage.setItem(cacheKey(path), JSON.stringify(data)); } catch {} };
-const cacheGet = path => { try { const d = localStorage.getItem(cacheKey(path)); return d ? JSON.parse(d) : null; } catch { return null; } };
 
 // ── Firebase ──────────────────────────────────────────────
 const fbBase = () => lsGet("hm_fb");
 const fbUrl = path => `${fbBase()}/haushalt/${path}.json`;
 const fbLesen = async path => {
-  try {
-    const r = await fetch(fbUrl(path));
-    if (r.ok) {
-      const data = await r.json();
-      if (data) cacheSet(path, data); // Lokalen Cache aktualisieren
-      return data;
-    }
-    return cacheGet(path); // Offline: lokalen Cache verwenden
-  } catch {
-    return cacheGet(path); // Offline: lokalen Cache verwenden
-  }
+  try { const r = await fetch(fbUrl(path)); return r.ok ? await r.json() : null; } catch { return null; }
 };
 const fbSchreiben = async (path, data) => {
-  cacheSet(path, data); // Immer lokal speichern
   try { await fetch(fbUrl(path), {method:"PUT", headers:{"Content-Type":"application/json"}, body:JSON.stringify(data)}); } catch {}
 };
 
@@ -157,71 +121,21 @@ const fbSchreiben = async (path, data) => {
 const useSprache = cb => {
   const ref = useRef();
   const [an, setAn] = useState(false);
-  const [vorschau, setVorschau] = useState("");
-  const accumulated = useRef("");
   const start = () => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) { alert("Spracherkennung nicht verfügbar"); return; }
-    accumulated.current = "";
-    const r = new SR();
-    r.lang="de-DE";
-    r.continuous=true;
-    r.interimResults=true;
-    r.onstart=()=>setAn(true);
-    r.onend=()=>{
-      const txt = accumulated.current.trim();
-      if(txt){ cb(txt); accumulated.current=""; }
-      setAn(false); setVorschau("");
-    };
-    r.onerror=e=>{
-      if(e.error!=="no-speech"){
-        const txt = accumulated.current.trim();
-        if(txt){ cb(txt); accumulated.current=""; }
-        setAn(false); setVorschau("");
-      }
-    };
-    r.onresult=e=>{
-      let interim="";
-      for(let i=e.resultIndex;i<e.results.length;i++){
-        if(e.results[i].isFinal) accumulated.current+=e.results[i][0].transcript+" ";
-        else interim+=e.results[i][0].transcript;
-      }
-      setVorschau((accumulated.current+interim).trim());
-    };
+    const r = new SR(); r.lang="de-DE"; r.continuous=false; r.interimResults=false;
+    r.onstart=()=>setAn(true); r.onend=()=>setAn(false); r.onerror=()=>setAn(false);
+    r.onresult=e=>cb(e.results[0][0].transcript);
     ref.current=r; r.start();
   };
-  const stop = () => { if(ref.current){ ref.current.stop(); } };
-  return {an, start, stop, vorschau};
+  const stop = () => { ref.current?.stop(); setAn(false); };
+  return {an, start, stop};
 };
-const zuBase64 = (f, maxSizeMB=4) => new Promise((ok,err) => {
-  const reader = new FileReader();
-  reader.onerror = err;
-  reader.onload = e => {
-    const img = new Image();
-    img.onerror = err;
-    img.onload = () => {
-      // Bild verkleinern falls nötig
-      const maxPx = 1600;
-      let w = img.width, h = img.height;
-      if (w > maxPx || h > maxPx) {
-        if (w > h) { h = Math.round(h * maxPx / w); w = maxPx; }
-        else { w = Math.round(w * maxPx / h); h = maxPx; }
-      }
-      const canvas = document.createElement("canvas");
-      canvas.width = w; canvas.height = h;
-      canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-      // Qualität reduzieren bis unter 4MB
-      let quality = 0.85;
-      let dataUrl = canvas.toDataURL("image/jpeg", quality);
-      while (dataUrl.length * 0.75 > maxSizeMB * 1024 * 1024 && quality > 0.3) {
-        quality -= 0.1;
-        dataUrl = canvas.toDataURL("image/jpeg", quality);
-      }
-      ok({data: dataUrl.split(",")[1], mt: "image/jpeg"});
-    };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(f);
+const zuBase64 = f => new Promise((ok,err) => {
+  const r = new FileReader();
+  r.onload = () => ok({data:r.result.split(",")[1], mt:f.type});
+  r.onerror = err; r.readAsDataURL(f);
 });
 
 // ── UI Bausteine ──────────────────────────────────────────
@@ -229,36 +143,34 @@ const Btn = ({onClick, disabled, bg="#3d5c3f", children, style={}}) => (
   <button onClick={onClick} disabled={disabled} style={{
     padding:"10px 14px", background:disabled?"#e5e7eb":bg,
     color:disabled?"#9ca3af":"white", border:"none", borderRadius:10,
-    cursor:disabled?"default":"pointer", fontSize:16, fontWeight:700, ...style
+    cursor:disabled?"default":"pointer", fontSize:26, fontWeight:700, ...style
   }}>{children}</button>
 );
 
 const EingabeFeld = ({ph, onOK, onBild, busy}) => {
   const [t, setT] = useState("");
   const fRef = useRef();
-  const {an, start, stop, vorschau} = useSprache(txt => { onOK(txt); setT(""); });
+  const {an, start, stop} = useSprache(txt => { setT(txt); setTimeout(()=>{ onOK(txt); setT(""); },100); });
   const go = () => { if(!t.trim()) return; onOK(t); setT(""); };
   return (
     <div style={{background:"white", borderRadius:14, padding:14, marginBottom:12, boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
       <div style={{display:"flex", gap:8, marginBottom:8}}>
-        <input value={an ? vorschau : t}
-          onChange={e=>{ if(!an) setT(e.target.value); }}
-          onKeyDown={e=>e.key==="Enter"&&go()} placeholder={an ? "🎤 Sprechen Sie jetzt…" : ph} disabled={busy}
-          style={{flex:1, padding:"14px 16px", borderRadius:10, border:`1.5px solid ${an?"#4a7a4d":"#e5e7eb"}`, fontSize:16, outline:"none", background: an?"#f0f7f0":"#fafafa", color: an?"#2c3e2d":"inherit"}}/>
-        <Btn onClick={go} disabled={(!t.trim()&&!an)||busy}>+</Btn>
+        <input value={t} onChange={e=>setT(e.target.value)}
+          onKeyDown={e=>e.key==="Enter"&&go()} placeholder={ph} disabled={busy}
+          style={{flex:1, padding:"10px 12px", borderRadius:10, border:"1.5px solid #e5e7eb", fontSize:26, outline:"none", background:"#fafafa"}}/>
+        <Btn onClick={go} disabled={!t.trim()||busy}>+</Btn>
       </div>
       <div style={{display:"flex", gap:8}}>
-        <Btn onClick={an?stop:start} disabled={busy} bg={an?"#dc2626":"#4a7a4d"} style={{flex:1,fontSize:18}}>
-          {an ? "🔴 Fertig (tippen)" : "🎤 Sprache"}
+        <Btn onClick={an?stop:start} disabled={busy} bg={an?"#dc2626":"#4a7a4d"} style={{flex:1,fontSize:13}}>
+          {an ? "🔴 Stoppen" : "🎤 Sprache"}
         </Btn>
         {onBild && <>
-          <Btn onClick={()=>fRef.current?.click()} disabled={busy} bg="#2563eb" style={{flex:1,fontSize:18}}>📷 Foto</Btn>
+          <Btn onClick={()=>fRef.current?.click()} disabled={busy} bg="#2563eb" style={{flex:1,fontSize:13}}>📷 Foto</Btn>
           <input ref={fRef} type="file" accept="image/*" style={{display:"none"}}
             onChange={async e=>{const f=e.target.files[0];if(f){await onBild(f);}e.target.value="";}}/>
         </>}
       </div>
-      {an && <p style={{fontSize:14,color:"#4a7a4d",margin:"6px 0 0",textAlign:"center"}}>🎙️ Hört zu… Sprechen Sie, dann 🔴 Fertig drücken</p>}
-      {busy && <div style={{textAlign:"center",color:"#6b7280",fontSize:20,marginTop:8,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+      {busy && <div style={{textAlign:"center",color:"#6b7280",fontSize:24,marginTop:8,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
         <span style={{display:"inline-block",animation:"spin 1s linear infinite"}}>⏳</span> Verarbeite…
       </div>}
     </div>
@@ -267,9 +179,9 @@ const EingabeFeld = ({ph, onOK, onBild, busy}) => {
 
 const SchBtn = ({label, aktiv, onClick, n}) => (
   <button onClick={onClick} style={{
-    padding:"6px 10px", borderRadius:20, border:"1.5px solid",
+    padding:"3px 8px", borderRadius:20, border:"1.5px solid",
     borderColor:aktiv?"#3d5c3f":"#e5e7eb", background:aktiv?"#3d5c3f":"white",
-    color:aktiv?"white":"#374151", fontSize:14, cursor:"pointer", fontWeight:aktiv?700:400
+    color:aktiv?"white":"#374151", fontSize:19, cursor:"pointer", fontWeight:aktiv?700:400
   }}>{label}{n>0?` (${n})`:""}</button>
 );
 
@@ -282,161 +194,38 @@ const Einrichtung = ({onStart}) => {
     const u = fb.trim().replace(/\/$/,"");
     if (!u.includes("firebaseio.com")) { setErr("Ungültige Firebase-URL – muss firebaseio.com enthalten"); return; }
     lsSet("hm_fb", u);
-    lsSet("hm_key", key.trim()); // Auch leeren Key speichern (zum Löschen)
+    if (key.trim()) lsSet("hm_key", key.trim());
     onStart();
   };
   return (
-    <div style={{width:"100%",minHeight:"100vh",background:"#f5f5f0"}}>
+    <div style={{maxWidth:500,margin:"0 auto",minHeight:"100vh",background:"#f5f5f0"}}>
       <div style={{background:"linear-gradient(135deg,#2c3e2d,#3d5c3f)",padding:"20px",color:"white"}}>
-        <h1 style={{margin:0,fontSize:16,fontWeight:800}}>🏠 Haushalt Manager</h1>
-        <p style={{margin:"4px 0 0",fontSize:18,opacity:0.8}}>Einrichtung</p>
+        <h1 style={{margin:0,fontSize:26,fontWeight:800}}>🏠 Haushalt Manager</h1>
+        <p style={{margin:"4px 0 0",fontSize:21,opacity:0.8}}>Einrichtung</p>
       </div>
       <div style={{padding:16}}>
         <div style={{background:"white",borderRadius:14,padding:16,marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
-          <p style={{fontWeight:800,fontSize:14,marginBottom:6}}>🔗 Firebase-URL</p>
+          <p style={{fontWeight:800,fontSize:19,marginBottom:6}}>🔗 Firebase-URL</p>
           <input value={fb} onChange={e=>setFb(e.target.value)}
             placeholder="https://einkauf-haushalt-default-rtdb.firebaseio.com"
-            style={{width:"100%",padding:"11px 12px",borderRadius:10,border:`1.5px solid ${err?"#dc2626":"#e5e7eb"}`,fontSize:18,outline:"none",background:"#fafafa"}}/>
-          {err && <p style={{color:"#dc2626",fontSize:20,marginTop:5}}>⚠️ {err}</p>}
+            style={{width:"100%",padding:"11px 12px",borderRadius:10,border:`1.5px solid ${err?"#dc2626":"#e5e7eb"}`,fontSize:21,outline:"none",background:"#fafafa"}}/>
+          {err && <p style={{color:"#dc2626",fontSize:24,marginTop:5}}>⚠️ {err}</p>}
         </div>
         <div style={{background:"white",borderRadius:14,padding:16,marginBottom:16,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
-          <p style={{fontWeight:800,fontSize:14,marginBottom:2}}>🤖 Anthropic API-Key <span style={{fontSize:14,color:key.trim()?"#3d5c3f":"#9ca3af",fontWeight:600}}>{key.trim() ? "✓ gespeichert" : "(optional)"}</span></p>
-          <p style={{fontSize:20,color:"#6b7280",marginBottom:8}}>Für Foto-Erkennung, handschriftliche Zettel & Kassenbons. Texteingabe funktioniert ohne Key.</p>
-          <input value={key} onChange={e=>setKey(e.target.value)}
+          <p style={{fontWeight:800,fontSize:19,marginBottom:2}}>🤖 Anthropic API-Key <span style={{fontSize:19,color:"#9ca3af",fontWeight:400}}>(optional)</span></p>
+          <p style={{fontSize:24,color:"#6b7280",marginBottom:8}}>Nur für Foto-Scan & Kassenbons. Texteingabe funktioniert ohne Key.</p>
+          <input value={key} onChange={e=>setKey(e.target.value)} type="password"
             placeholder="sk-ant-api03-…"
-            style={{width:"100%",padding:"11px 12px",borderRadius:10,border:"1.5px solid #e5e7eb",fontSize:16,outline:"none",background:"#fafafa",fontFamily:"monospace"}}/>
-          <div style={{display:"flex",gap:8,marginTop:8}}>
-            <button onClick={async()=>{
-              const k=key.trim();
-              if(!k){alert("Bitte erst Key eingeben");return;}
-              lsSet("hm_key",k);
-              try{
-                const r=await fetch("https://api.anthropic.com/v1/messages",{
-                  method:"POST",
-                  headers:{"Content-Type":"application/json","x-api-key":k,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
-                  body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:10,messages:[{role:"user",content:"Hi"}]})
-                });
-                const d=await r.json();
-                if(d.content) alert("✅ API-Key funktioniert!");
-                else alert("❌ Fehler: "+(d.error?.message||JSON.stringify(d)));
-              }catch(e){alert("❌ Verbindungsfehler: "+e.message);}
-            }} style={{flex:1,padding:"9px",background:"#2563eb",color:"white",border:"none",borderRadius:8,cursor:"pointer",fontSize:18,fontWeight:700}}>
-              🔍 Key testen
-            </button>
-          </div>
-          {key && <p style={{fontSize:14,color:"#3d5c3f",marginTop:5}}>✓ Key gespeichert: …{key.slice(-8)}</p>}
+            style={{width:"100%",padding:"11px 12px",borderRadius:10,border:"1.5px solid #e5e7eb",fontSize:21,outline:"none",background:"#fafafa"}}/>
         </div>
         <button onClick={start} disabled={!fb.trim()} style={{
-          width:"100%", padding:"14px", fontSize:20, fontWeight:800,
+          width:"100%", padding:"14px", fontSize:24, fontWeight:800,
           background:!fb.trim()?"#e5e7eb":"#3d5c3f", color:!fb.trim()?"#9ca3af":"white",
           border:"none", borderRadius:12, cursor:!fb.trim()?"default":"pointer"
         }}>✅ Starten</button>
-        <div style={{background:"#fef9c3",borderRadius:12,padding:12,fontSize:20,color:"#92400e",lineHeight:1.6,marginTop:12}}>
+        <div style={{background:"#fef9c3",borderRadius:12,padding:12,fontSize:24,color:"#92400e",lineHeight:1.6,marginTop:12}}>
           💡 Beide Smartphones: Diese Seite öffnen → Firebase-URL eingeben → <strong>Zum Homescreen hinzufügen</strong>
         </div>
-      </div>
-    </div>
-  );
-};
-
-// ── SPRACH-BUTTON (klein, für Edit-Felder) ────────────────
-const VoiceBtn = ({onResult}) => {
-  const [an, setAn] = useState(false);
-  const ref = useRef();
-  const toggle = () => {
-    if (an) { ref.current?.stop(); setAn(false); return; }
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) return;
-    const r = new SR(); r.lang="de-DE"; r.continuous=false; r.interimResults=false;
-    r.onstart=()=>setAn(true); r.onend=()=>setAn(false); r.onerror=()=>setAn(false);
-    r.onresult=e=>{ onResult(e.results[0][0].transcript); };
-    ref.current=r; r.start();
-  };
-  return (
-    <button onClick={toggle} style={{padding:"8px 10px",borderRadius:8,border:"none",background:an?"#dc2626":"#4a7a4d",color:"white",cursor:"pointer",fontSize:20,flexShrink:0}}>
-      {an?"🔴":"🎤"}
-    </button>
-  );
-};
-
-// ── FOTO-VORSCHAU + BEARBEITUNG ───────────────────────────
-const FotoVorschau = ({bild, erkannt, ortName, faecher, neuSch, onBestaetigen, onAbbrechen}) => {
-  const [items, setItems] = useState(erkannt.map((x,i)=>({...x, _id:i})));
-  const [editIdx, setEditIdx] = useState(null);
-  const [editVal, setEditVal] = useState({});
-
-  const update = (idx, feld, val) => setItems(p=>p.map((it,i)=>i===idx?{...it,[feld]:val}:it));
-  const loeschen = idx => setItems(p=>p.filter((_,i)=>i!==idx));
-  const hinzufuegen = () => setItems(p=>[...p,{name:"",qty:1,unit:"Stück",sch:neuSch||null,_id:Date.now()}]);
-
-  return (
-    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,display:"flex",flexDirection:"column",width:"100%"}}>
-      <div style={{background:"#2c3e2d",padding:"12px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-        <span style={{color:"white",fontWeight:800,fontSize:20}}>📷 Foto-Erkennung prüfen</span>
-        <button onClick={onAbbrechen} style={{background:"rgba(255,255,255,0.2)",border:"none",color:"white",borderRadius:8,padding:"4px 10px",cursor:"pointer",fontSize:16}}>✕</button>
-      </div>
-      <div style={{flex:1,overflowY:"auto",background:"#f5f5f0",padding:12}}>
-        {/* Vorschaubild */}
-        <img src={bild} alt="Scan" style={{width:"100%",maxHeight:200,objectFit:"contain",borderRadius:10,marginBottom:10,background:"white",border:"1px solid #e5e7eb"}}/>
-        <p style={{fontSize:18,color:"#6b7280",marginBottom:8,fontWeight:600}}>Erkannte Artikel – tippen zum Bearbeiten:</p>
-        {items.map((item,idx)=>(
-          <div key={item._id} style={{background:"white",borderRadius:12,padding:"14px 16px",marginBottom:8,boxShadow:"0 1px 4px rgba(0,0,0,0.08)",animation:"fadein 0.2s ease"}}>
-            {editIdx===idx ? (
-              <div>
-                <div style={{display:"flex",gap:6,marginBottom:6}}>
-                <input value={editVal.name??item.name} onChange={e=>setEditVal(p=>({...p,name:e.target.value}))}
-                  placeholder="Artikelname" autoFocus
-                  style={{flex:1,padding:"8px 10px",borderRadius:8,border:"2px solid #3d5c3f",fontSize:20,outline:"none"}}/>
-                <VoiceBtn onResult={txt=>setEditVal(p=>({...p,name:txt.trim()}))}/>
-              </div>
-                <div style={{display:"flex",gap:6,marginBottom:6}}>
-                  <input type="number" value={editVal.qty??item.qty}
-                    onChange={e=>setEditVal(p=>({...p,qty:e.target.value}))}
-                    onFocus={e=>e.target.select()}
-                    onBlur={e=>setEditVal(p=>({...p,qty:parseFloat(e.target.value)||1}))}
-                    style={{width:70,padding:"7px 8px",borderRadius:8,border:"1.5px solid #e5e7eb",fontSize:14,outline:"none"}}/>
-                  <select value={editVal.unit??item.unit} onChange={e=>setEditVal(p=>({...p,unit:e.target.value}))}
-                    style={{flex:1,padding:"7px 8px",borderRadius:8,border:"1.5px solid #e5e7eb",fontSize:14,outline:"none"}}>
-                    {["Stück","kg","g","L","ml","Packung","Flasche","Dose","Glas","Beutel","Becher"].map(u=><option key={u}>{u}</option>)}
-                  </select>
-                  {faecher.length>0 && <select value={editVal.sch??item.sch??""} onChange={e=>setEditVal(p=>({...p,sch:e.target.value?parseInt(e.target.value):null}))}
-                    style={{width:80,padding:"7px 6px",borderRadius:8,border:"1.5px solid #e5e7eb",fontSize:16,outline:"none"}}>
-                    <option value="">–</option>
-                    {faecher.map(f=><option key={f} value={f}>Sch.{f}</option>)}
-                  </select>}
-                </div>
-                <div style={{display:"flex",gap:6}}>
-                  <button onClick={()=>{update(idx,"name",editVal.name??item.name);update(idx,"qty",editVal.qty??item.qty);update(idx,"unit",editVal.unit??item.unit);update(idx,"sch",editVal.sch!==undefined?editVal.sch:item.sch);setEditIdx(null);setEditVal({});}}
-                    style={{flex:1,padding:"8px",background:"#3d5c3f",color:"white",border:"none",borderRadius:8,cursor:"pointer",fontWeight:700,fontSize:16}}>✓ OK</button>
-                  <button onClick={()=>{setEditIdx(null);setEditVal({});}}
-                    style={{padding:"8px 12px",background:"#e5e7eb",color:"#374151",border:"none",borderRadius:8,cursor:"pointer",fontSize:16}}>Abbrechen</button>
-                </div>
-              </div>
-            ) : (
-              <div style={{display:"flex",alignItems:"center",gap:8}} onClick={()=>{setEditIdx(idx);setEditVal({});}}>
-                <div style={{flex:1,cursor:"pointer"}}>
-                  <span style={{fontSize:20,fontWeight:700}}>{item.name||"(leer)"}</span>
-                  <span style={{fontSize:18,color:"#6b7280",marginLeft:6}}>{item.qty} {item.unit}</span>
-                  {item.sch&&<span style={{fontSize:20,color:"#3d5c3f",marginLeft:5,background:"#e8f3e8",padding:"3px 8px",borderRadius:6,fontWeight:600}}>#{item.sch}</span>}
-                  <span style={{fontSize:14,color:"#9ca3af",marginLeft:6}}>✏️ tippen</span>
-                </div>
-                <button onClick={e=>{e.stopPropagation();loeschen(idx);}}
-                  style={{background:"#fee2e2",border:"none",cursor:"pointer",color:"#dc2626",width:32,height:32,borderRadius:7,fontWeight:700,fontSize:20,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>×</button>
-              </div>
-            )}
-          </div>
-        ))}
-        <button onClick={hinzufuegen}
-          style={{width:"100%",padding:"10px",background:"white",border:"2px dashed #3d5c3f",borderRadius:10,color:"#3d5c3f",cursor:"pointer",fontSize:14,fontWeight:700,marginTop:4}}>
-          + Artikel hinzufügen
-        </button>
-      </div>
-      <div style={{padding:"12px 16px",background:"white",borderTop:"1px solid #e5e7eb",display:"flex",gap:10}}>
-        <button onClick={onAbbrechen} style={{flex:1,padding:"12px",background:"#e5e7eb",color:"#374151",border:"none",borderRadius:10,cursor:"pointer",fontSize:14,fontWeight:700}}>Abbrechen</button>
-        <button onClick={()=>onBestaetigen(items.filter(i=>i.name.trim()))}
-          style={{flex:2,padding:"12px",background:"#3d5c3f",color:"white",border:"none",borderRadius:10,cursor:"pointer",fontSize:14,fontWeight:800}}>
-          ✅ {items.filter(i=>i.name.trim()).length} Artikel speichern
-        </button>
       </div>
     </div>
   );
@@ -448,87 +237,42 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
   const [oId, setOId] = useState("vr1");
   const [filtSch, setFiltSch] = useState(null);
   const [neuSch, setNeuSch] = useState(null);
+  const [zuletzt, setZuletzt] = useState("");
   const [busy, setBusy] = useState(false);
-  const [sortAZ, setSortAZ] = useState(false);
-  const [fotoData, setFotoData] = useState(null); // {bild, erkannt}
-  const [editItem, setEditItem] = useState(null); // {id, ...item}
-  const [zuletzt, setZuletzt] = useState(""); // Bestätigungs-Toast
 
   const bereich = BEREICHE.find(b=>b.id===bId);
   const ort = ALLE_ORTE.find(o=>o.id===oId);
   const hatSch = (ort?.faecher||[]).length > 0;
   const alleItems = bestand[oId] || [];
-  const itemsRaw = filtSch===null ? alleItems : alleItems.filter(i=>i.sch===filtSch);
-  const items = sortAZ ? [...itemsRaw].sort((a,b)=>a.name.localeCompare(b.name,"de")) : itemsRaw;
+  const items = filtSch===null ? alleItems : alleItems.filter(i=>i.sch===filtSch);
 
-  const hinzufuegen = async (txt, schublade) => {
-    // schublade direkt als Parameter – kein Closure/Ref Problem möglich
+  const hinzufuegen = async (txt, gewSch) => {
     setBusy(true);
     try {
       let parsed;
       try {
-        parsed = await claudeCall(
-          [{role:"user",content:txt}],
-          `Extrahiere ALLE Lebensmittel als einzelne Einträge. NUR JSON-Array:[{"name":"X","qty":1,"unit":"Stück"}]`
-        );
-      } catch {
-        parsed = parseText(txt);
-      }
+        parsed = await claudeCall([{role:"user",content:txt}], 'Extrahiere ALLE Lebensmittel. NUR JSON-Array:[{"name":"X","qty":1,"unit":"Stück"}]');
+      } catch { parsed = parseText(txt); }
       if(parsed && parsed.length) {
-        const mitSch = parsed.map(x=>({name:x.name||"?", qty:x.qty||1, unit:x.unit||"Stück", sch: schublade ?? null}));
-        onAdd(oId, mitSch);
-        setZuletzt(`✓ ${mitSch.length} Artikel ${schublade != null ? "→ Schublade "+schublade : "gespeichert"}`);
-        setTimeout(() => setZuletzt(""), 3000);
+        onAdd(oId, parsed.map(x=>({...x, fach: gewSch != null ? Number(gewSch) : null})));
+        setZuletzt("✓ " + parsed.length + " Artikel" + (gewSch != null ? " → Schublade " + gewSch : ""));
+        setTimeout(()=>setZuletzt(""), 3000);
       }
     } catch(e) { console.error(e); }
     setBusy(false);
   };
 
-  const fotoScanBestand = async f => {
-    const gewaehlteSch = neuSch; // direkt aus State lesen
-    setBusy(true);
-    const bildUrl = URL.createObjectURL(f);
-    try {
-      const {data,mt} = await zuBase64(f);
-      const fachHinweis = hatSch ? ` Schubladennummer aus Liste ${JSON.stringify(ort?.faecher||[])} als "sch" falls erkennbar, sonst null.` : "";
-      const parsed = await claudeCall(
-        [{role:"user",content:[
-          {type:"image",source:{type:"base64",media_type:mt,data}},
-          {type:"text",text:"Bitte lies JEDEN Artikel/Lebensmittel aus diesem Bild oder handschriftlichen Zettel vollständig. Achte auf jede Zeile, auch schlecht leserliche. Bei unlesbaren Wörtern: beste Schätzung angeben."}
-        ]}],
-        `Extrahiere ALLE Lebensmittel und Artikel aus dem Bild/Zettel. Jeden Eintrag einzeln. Auch bei unlesbarer Handschrift die wahrscheinlichste Variante nehmen. Keine Auslassungen.${fachHinweis} NUR JSON-Array:[{"name":"X","qty":1,"unit":"Stück","sch":null}] Nur JSON, kein anderer Text.`
-      );
-      if(!parsed || !parsed.length) {
-        alert("Keine Artikel erkannt. Bitte deutlicheres Foto machen."); setBusy(false); return;
-      }
-      // Vorschau anzeigen statt direkt speichern
-      const mitSch = parsed.map(x=>({...x, sch: gewaehlteSch !== null ? gewaehlteSch : (x.sch ?? null)}));
-      setFotoData({bild: bildUrl, erkannt: mitSch});
-    } catch(e) {
-      if(e.message==="KEIN_KEY") alert("📷 Foto-Erkennung benötigt einen Anthropic API-Key.\n\n⚙️ Einstellungen öffnen → API-Key eingeben → Starten");
-      else alert("Fehler beim Foto-Scan: " + e.message);
-    }
-    setBusy(false);
-  };
-
-  const fotoBestaetigen = (items) => {
-    onAdd(oId, items.map(x=>({...x, sch: x.sch != null ? Number(x.sch) : null})));
-    setFotoData(null);
-  };
 
   return (
     <div>
-      {/* Foto-Vorschau Overlay */}
-      {fotoData && <FotoVorschau bild={fotoData.bild} erkannt={fotoData.erkannt} ortName={ort?.name||""} faecher={ort?.faecher||[]} neuSch={neuSch} onBestaetigen={fotoBestaetigen} onAbbrechen={()=>setFotoData(null)}/>}
-
       {/* Bereiche */}
       <div style={{display:"flex",gap:6,marginBottom:12}}>
         {BEREICHE.map(b => (
-          <button key={b.id} onClick={()=>{setBId(b.id);setOId(b.orte[0].id);setFiltSch(null);setNeuSch(null);}}
+          <button key={b.id} onClick={()=>{setBId(b.id);setOId(b.orte[0].id);setFiltSch(null);}}
             style={{flex:1,padding:"8px 2px",borderRadius:10,border:"2px solid",
               borderColor:bId===b.id?"#3d5c3f":"#e5e7eb",
               background:bId===b.id?"#3d5c3f":"white",
-              color:bId===b.id?"white":"#374151",fontSize:14,cursor:"pointer",fontWeight:700,lineHeight:1.3}}>
+              color:bId===b.id?"white":"#374151",fontSize:19,cursor:"pointer",fontWeight:700,lineHeight:1.3}}>
             {b.icon}<br/>{b.name}
           </button>
         ))}
@@ -539,15 +283,14 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
         {bereich?.orte.map(o => {
           const cnt = (bestand[o.id]||[]).length;
           return (
-            <button key={o.id} onClick={()=>{setOId(o.id);setFiltSch(null);setNeuSch(null);}}
-              style={{padding:"8px 12px",borderRadius:20,border:"2px solid",
+            <button key={o.id} onClick={()=>{setOId(o.id);setFiltSch(null);}}
+              style={{padding:"5px 10px",borderRadius:20,border:"2px solid",
                 borderColor:oId===o.id?"#3d5c3f":"#e5e7eb",
                 background:oId===o.id?"#f0f4f1":"white",
-                color:"#374151",fontSize:20,cursor:"pointer",fontWeight:oId===o.id?700:400,
+                color:"#374151",fontSize:24,cursor:"pointer",fontWeight:oId===o.id?700:400,
                 display:"flex",alignItems:"center",gap:4}}>
-              {o.nr && <span style={{background:"#3d5c3f",color:"white",borderRadius:"50%",width:22,height:22,display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:800,flexShrink:0}}>{o.nr}</span>}
               {o.icon} {o.name}
-              {cnt > 0 && <span style={{background:"#555",color:"white",borderRadius:10,padding:"0 5px",fontSize:16}}>{cnt}</span>}
+              {cnt > 0 && <span style={{background:"#3d5c3f",color:"white",borderRadius:10,padding:"0 5px",fontSize:10}}>{cnt}</span>}
             </button>
           );
         })}
@@ -557,134 +300,60 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
       {hatSch && (
         <div style={{background:"white",borderRadius:12,padding:10,marginBottom:12,boxShadow:"0 1px 4px rgba(0,0,0,0.05)"}}>
           <div style={{display:"flex",alignItems:"center",gap:5,flexWrap:"wrap",marginBottom:6}}>
-            <span style={{fontSize:16,fontWeight:700,color:"#9ca3af"}}>ANZEIGEN:</span>
+            <span style={{fontSize:26,fontWeight:700,color:"#9ca3af"}}>ANZEIGEN:</span>
             <SchBtn label="Alle" aktiv={filtSch===null} onClick={()=>setFiltSch(null)} n={alleItems.length}/>
-            {(ort.faecher||[]).map(s=>(
-              <SchBtn key={s} label={`Nr. ${s}`} aktiv={filtSch===s} onClick={()=>setFiltSch(Number(s))} n={alleItems.filter(i=>Number(i.sch)===Number(s)).length}/>
+            {Array.from({length:ort.sch},(_,i)=>i+1).map(s=>(
+              <SchBtn key={s} label={`Schublade ${s}`} aktiv={filtSch===s} onClick={()=>setFiltSch(s)} n={alleItems.filter(i=>i.sch===s).length}/>
             ))}
           </div>
           <div style={{display:"flex",alignItems:"center",gap:5,flexWrap:"wrap"}}>
-            <span style={{fontSize:16,fontWeight:700,color:"#9ca3af"}}>EINLEGEN IN SCH.:</span>
-            <SchBtn label="– (offen)" aktiv={neuSch===null} onClick={()=>setNeuSch(null)} n={0}/>
-            {(ort.faecher||[]).map(s=>(
+            <span style={{fontSize:26,fontWeight:700,color:"#9ca3af"}}>NEUER ARTIKEL → SCH.:</span>
+            <SchBtn label="–" aktiv={neuSch===null} onClick={()=>setNeuSch(null)} n={0}/>
+            {Array.from({length:ort.sch},(_,i)=>i+1).map(s=>(
               <SchBtn key={s} label={`${s}`} aktiv={neuSch===s} onClick={()=>setNeuSch(Number(s))} n={0}/>
             ))}
-            {neuSch!==null && (
-              <span style={{fontSize:18,color:"white",fontWeight:800,background:"#e53e3e",padding:"4px 12px",borderRadius:8,display:"inline-block"}}>
-                ✓ Schublade {neuSch} gewählt
-              </span>
-            )}
           </div>
         </div>
       )}
 
-      <EingabeFeld ph={`Artikel für ${ort?.name||""}… (Komma trennt mehrere)`} onOK={txt => hinzufuegen(txt, neuSch)} onBild={fotoScanBestand} busy={busy}/>
-      {zuletzt && <div style={{background:"#3d5c3f",color:"white",borderRadius:10,padding:"8px 14px",fontSize:16,fontWeight:700,marginBottom:10,textAlign:"center",animation:"fadein 0.3s ease"}}>{zuletzt}</div>}
+      <EingabeFeld ph={`Artikel für ${ort?.name||""}… (Komma trennt mehrere)`} onOK={txt => hinzufuegen(txt, neuSch)} busy={busy}/>
 
       {/* Artikelliste */}
+      {zuletzt && <div style={{background:"#3d5c3f",color:"white",borderRadius:10,padding:"8px 14px",fontSize:19,fontWeight:700,textAlign:"center",marginBottom:8}}>{zuletzt}</div>}
       <div style={{background:"white",borderRadius:14,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
         <div style={{padding:"10px 14px",background:"#f0f4f1",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <span style={{fontWeight:700,fontSize:16}}>{ort?.icon} {ort?.nr ? `[${ort.nr}] ` : ""}{ort?.name} <span style={{fontSize:14,color:"#9ca3af"}}>({ort?.info})</span>{filtSch?` · #${filtSch}`:""}</span>
-          <div style={{display:"flex",alignItems:"center",gap:6}}>
-            <button onClick={()=>setSortAZ(s=>!s)} style={{background:sortAZ?"#3d5c3f":"#e5e7eb",color:sortAZ?"white":"#374151",border:"none",borderRadius:6,padding:"5px 10px",fontSize:14,cursor:"pointer",fontWeight:600}}>{sortAZ?"✓ A→Z":"A→Z"}</button>
-            <span style={{fontSize:14,color:"#6b7280"}}>{items.length}</span>
-          </div>
+          <span style={{fontWeight:700,fontSize:13}}>{ort?.icon} {ort?.name} <span style={{fontSize:26,color:"#9ca3af"}}>({ort?.info})</span>{filtSch?` · Schublade ${filtSch}`:""}</span>
+          <span style={{fontSize:19,color:"#6b7280"}}>{items.length} Artikel</span>
         </div>
         {items.length===0
-          ? <div style={{textAlign:"center",padding:"24px",color:"#9ca3af"}}><div style={{fontSize:20}}>{ort?.icon}</div><p style={{margin:"6px 0 0",fontSize:20}}>Leer – Artikel eingeben!</p></div>
+          ? <div style={{textAlign:"center",padding:"24px",color:"#9ca3af"}}><div style={{fontSize:28}}>{ort?.icon}</div><p style={{margin:"6px 0 0",fontSize:12}}>Leer – Artikel eingeben!</p></div>
           : items.map((item,i) => (
-            <div key={item.id}>
-              {editItem?.id===item.id ? (
-                <div style={{padding:"10px 14px",background:"#f0f9f0",borderBottom:i<items.length-1?"1px solid #e5e7eb":"none"}}>
-                  <div style={{display:"flex",gap:6,marginBottom:6}}>
-                    <input value={editItem.name} onChange={e=>setEditItem(p=>({...p,name:e.target.value}))} autoFocus
-                      style={{flex:1,padding:"8px 10px",borderRadius:8,border:"2px solid #3d5c3f",fontSize:18,outline:"none"}}/>
-                    <VoiceBtn onResult={txt=>setEditItem(p=>({...p,name:txt.trim()}))}/>
-                  </div>
-                  <div style={{display:"flex",gap:6,marginBottom:6}}>
-                    <input type="number" value={editItem.qty}
-                      onChange={e=>setEditItem(p=>({...p,qty:e.target.value}))}
-                      onFocus={e=>e.target.select()}
-                      onBlur={e=>setEditItem(p=>({...p,qty:parseFloat(e.target.value)||1}))}
-                      style={{width:65,padding:"7px 8px",borderRadius:8,border:"1.5px solid #e5e7eb",fontSize:14,outline:"none"}}/>
-                    <select value={editItem.unit} onChange={e=>setEditItem(p=>({...p,unit:e.target.value}))}
-                      style={{flex:1,padding:"7px 8px",borderRadius:8,border:"1.5px solid #e5e7eb",fontSize:14,outline:"none"}}>
-                      {["Stück","kg","g","L","ml","Packung","Flasche","Dose","Glas","Beutel"].map(u=><option key={u}>{u}</option>)}
-                    </select>
-                    {hatSch && <select value={editItem.sch||""} onChange={e=>setEditItem(p=>({...p,sch:e.target.value?parseInt(e.target.value):null}))}
-                      style={{width:85,padding:"7px 6px",borderRadius:8,border:"1.5px solid #e5e7eb",fontSize:16,outline:"none"}}>
-                      <option value="">– kein</option>
-                      {(ort?.faecher||[]).map(f=><option key={f} value={f}>#{f}</option>)}
-                    </select>}
-                  </div>
-                  <div style={{display:"flex",gap:6}}>
-                    <button onClick={()=>{onRemove(oId,item.id);onAdd(oId,[{name:editItem.name,qty:editItem.qty,unit:editItem.unit,sch:editItem.sch}]);setEditItem(null);}}
-                      style={{flex:1,padding:"9px",background:"#3d5c3f",color:"white",border:"none",borderRadius:8,cursor:"pointer",fontWeight:700,fontSize:14}}>✓ Speichern</button>
-                    <button onClick={()=>setEditItem(null)}
-                      style={{padding:"9px 14px",background:"#e5e7eb",color:"#374151",border:"none",borderRadius:8,cursor:"pointer",fontSize:14}}>✕</button>
-                  </div>
-                </div>
-              ) : (
-                <div style={{display:"flex",alignItems:"center",padding:"11px 14px",borderBottom:i<items.length-1?"1px solid #f3f4f6":"none",gap:8,cursor:"pointer"}} onClick={()=>setEditItem({...item})}>
-                  <div style={{flex:1}}>
-                    <span style={{fontSize:20,fontWeight:700}}>{item.name}</span>
-                    <span style={{fontSize:16,color:"#6b7280",marginLeft:6}}>{item.qty} {item.unit}</span>
-                    {item.sch != null && item.sch !== "" && item.sch !== 0
-                      ? <span style={{fontSize:16,color:"white",marginLeft:6,background:"#3d5c3f",padding:"6px 10px",borderRadius:6,fontWeight:800}}>#{item.sch}</span>
-                      : null}
-                    <span style={{fontSize:16,color:"#c0c9c0",marginLeft:4}}>✏️</span>
-                  </div>
-                  <span style={{fontSize:16,color:"#d1d5db",marginRight:4,flexShrink:0}}>{item.datum}</span>
-                  <button onClick={e=>{e.stopPropagation();onRemove(oId,item.id);}} style={{background:"#fee2e2",border:"none",cursor:"pointer",color:"#dc2626",width:32,height:32,borderRadius:7,fontWeight:700,fontSize:14,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>×</button>
-                </div>
-              )}
+            <div key={item.id} style={{display:"flex",alignItems:"center",padding:"9px 14px",borderBottom:i<items.length-1?"1px solid #f3f4f6":"none",gap:8}}>
+              <div style={{flex:1}}>
+                <span style={{fontSize:26,fontWeight:600}}>{item.name}</span>
+                <span style={{fontSize:24,color:"#6b7280",marginLeft:6}}>{item.qty} {item.unit}</span>
+                {item.sch && <span style={{fontSize:26,color:"#9ca3af",marginLeft:5,background:"#f3f4f6",padding:"1px 5px",borderRadius:6}}>Sch.{item.sch}</span>}
+              </div>
+              <span style={{fontSize:21,color:"#d1d5db"}}>{item.datum}</span>
+              <button onClick={()=>onRemove(oId,item.id)} style={{background:"#fee2e2",border:"none",cursor:"pointer",color:"#dc2626",width:26,height:26,borderRadius:7,fontWeight:700,fontSize:26,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
             </div>
           ))
         }
       </div>
 
-      {/* Globale alphabetische Sortierung */}
-      {sortAZ && (() => {
-        const alleGlobal = ALLE_ORTE.flatMap(o => (bestand[o.id]||[]).map(i=>({...i,ort:o})));
-        const sortiert = [...alleGlobal].sort((a,b)=>a.name.localeCompare(b.name,"de"));
-        return (
-          <div style={{marginTop:12}}>
-            <p style={{fontSize:16,fontWeight:700,color:"#3d5c3f",textTransform:"uppercase",margin:"0 0 8px"}}>📋 Alle Artikel A–Z ({sortiert.length})</p>
-            <div style={{background:"white",borderRadius:14,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
-              {sortiert.length===0
-                ?<div style={{textAlign:"center",padding:"20px",color:"#9ca3af",fontSize:18}}>Noch keine Artikel</div>
-                :sortiert.map((item,i)=>(
-                  <div key={item.id+item.ort.id} style={{display:"flex",alignItems:"center",padding:"8px 14px",borderBottom:i<sortiert.length-1?"1px solid #f3f4f6":"none",gap:8}}>
-                    <div style={{flex:1}}>
-                      <span style={{fontSize:14,fontWeight:700}}>{item.name}</span>
-                      <span style={{fontSize:18,color:"#6b7280",marginLeft:6}}>{item.qty} {item.unit}</span>
-                      {item.sch&&<span style={{fontSize:20,color:"#3d5c3f",marginLeft:5,background:"#e8f3e8",padding:"3px 8px",borderRadius:5,fontWeight:600}}>#{item.sch}</span>}
-                    </div>
-                    <div style={{textAlign:"right",flexShrink:0}}>
-                      <div style={{fontSize:14,fontWeight:600,color:"#3d5c3f"}}>{item.ort.icon} {item.ort.name}</div>
-                      <div style={{fontSize:18,color:"#9ca3af"}}>{item.ort.bName}</div>
-                    </div>
-                  </div>
-                ))
-              }
-            </div>
-          </div>
-        );
-      })()}
-
       {/* Alle Lagerorte Übersicht */}
-      <p style={{fontSize:16,fontWeight:700,color:"#9ca3af",textTransform:"uppercase",margin:"14px 0 8px"}}>Alle Lagerorte</p>
+      <p style={{fontSize:26,fontWeight:700,color:"#9ca3af",textTransform:"uppercase",margin:"14px 0 8px"}}>Alle Lagerorte</p>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7}}>
         {ALLE_ORTE.map(o => {
           const cnt = (bestand[o.id]||[]).length;
           return (
             <button key={o.id} onClick={()=>{setBId(o.bId);setOId(o.id);setFiltSch(null);}}
-              style={{background:"white",borderRadius:12,padding:"15px 16px",border:"1.5px solid",
+              style={{background:"white",borderRadius:12,padding:"9px 11px",border:"1.5px solid",
                 borderColor:oId===o.id?"#3d5c3f":"#f3f4f6",cursor:"pointer",textAlign:"left"}}>
-              <div style={{fontSize:20}}>{o.icon}</div>
-              <div style={{fontSize:20,fontWeight:700,color:"#374151",marginTop:2,lineHeight:1.2}}>{o.nr ? <span style={{color:"#3d5c3f",marginRight:3}}>[{o.nr}]</span> : null}{o.name}</div>
-              <div style={{fontSize:16,color:"#9ca3af"}}>{o.bName}</div>
-              <div style={{fontSize:16,fontWeight:700,color:cnt?"#3d5c3f":"#d1d5db",marginTop:2}}>{cnt?`${cnt} Artikel`:"leer"}</div>
+              <div style={{fontSize:16}}>{o.icon}</div>
+              <div style={{fontSize:19,fontWeight:600,color:"#374151",marginTop:2,lineHeight:1.2}}>{o.name}</div>
+              <div style={{fontSize:21,color:"#9ca3af"}}>{o.bName} · {o.info}</div>
+              <div style={{fontSize:26,fontWeight:700,color:cnt?"#3d5c3f":"#d1d5db",marginTop:2}}>{cnt?`${cnt} Artikel`:"leer"}</div>
             </button>
           );
         })}
@@ -693,150 +362,8 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
   );
 };
 
-// ── EINKAUF-ARTIKEL (editierbar + einlagern) ─────────────
-const EinkaufArtikel = ({item, onToggle, onRemove, onShop, onUpdate, onEinlagern, bestand, isLast}) => {
-  const [modus, setModus] = useState(null); // null | "edit" | "einlagern"
-  const [val, setVal] = useState({});
-  const [gewOrt, setGewOrt] = useState(null);
-  const [gewSch, setGewSch] = useState(null);
-
-  // Ähnliche Artikel im Bestand finden
-  const findeAehnlich = () => {
-    const name = item.name.toLowerCase();
-    const treffer = [];
-    ALLE_ORTE.forEach(ort => {
-      const items = bestand[ort.id] || [];
-      items.forEach(i => {
-        if(i.name.toLowerCase().includes(name.slice(0,4)) || name.includes(i.name.toLowerCase().slice(0,4))) {
-          treffer.push({ort, sch:i.sch});
-        }
-      });
-    });
-    return treffer;
-  };
-
-  const aehnlich = findeAehnlich();
-  const gewOrtObj = ALLE_ORTE.find(o=>o.id===gewOrt);
-
-  const oeffnen = () => {
-    if(item.erledigt) return;
-    setModus("einlagern");
-    setGewOrt(aehnlich[0]?.ort.id || null);
-    setGewSch(aehnlich[0]?.sch || null);
-  };
-
-  // EINLAGERN-MODUS
-  if(modus==="einlagern") return (
-    <div style={{background:"#f0f9f0",borderBottom:isLast?"none":"1px solid #e5e7eb",padding:"12px"}}>
-      <div style={{fontWeight:800,fontSize:20,marginBottom:8,color:"#2c3e2d"}}>
-        📦 {item.name} einlagern
-        <span style={{fontSize:18,color:"#6b7280",fontWeight:400,marginLeft:6}}>{item.qty} {item.unit}</span>
-      </div>
-      {aehnlich.length>0 && (
-        <div style={{background:"#e8f3e8",borderRadius:8,padding:"6px 10px",fontSize:20,color:"#3d5c3f",marginBottom:8,fontWeight:600}}>
-          💡 Ähnlich vorhanden: {[...new Set(aehnlich.map(a=>a.ort.name))].join(", ")}
-        </div>
-      )}
-      {/* Bereich-Tabs */}
-      <div style={{display:"flex",gap:5,marginBottom:8,flexWrap:"wrap"}}>
-        {BEREICHE.map(b=>(
-          <button key={b.id} onClick={()=>{setGewOrt(b.orte[0].id);setGewSch(null);}}
-            style={{padding:"8px 12px",borderRadius:8,border:"2px solid",fontSize:20,cursor:"pointer",fontWeight:700,
-              borderColor:gewOrtObj?.bId===b.id?"#3d5c3f":"#e5e7eb",
-              background:gewOrtObj?.bId===b.id?"#3d5c3f":"white",
-              color:gewOrtObj?.bId===b.id?"white":"#374151"}}>
-            {b.icon} {b.name}
-          </button>
-        ))}
-      </div>
-      {/* Ort-Auswahl */}
-      <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:8}}>
-        {BEREICHE.find(b=>b.id===(gewOrtObj?.bId||"ku"))?.orte.map(o=>(
-          <button key={o.id} onClick={()=>{setGewOrt(o.id);setGewSch(null);}}
-            style={{padding:"7px 12px",borderRadius:20,border:"2px solid",fontSize:20,cursor:"pointer",fontWeight:gewOrt===o.id?700:400,
-              borderColor:gewOrt===o.id?"#3d5c3f":"#e5e7eb",
-              background:gewOrt===o.id?"#f0f4f1":"white",color:"#374151",
-              display:"flex",alignItems:"center",gap:3}}>
-            {o.nr&&<span style={{background:"#3d5c3f",color:"white",borderRadius:"50%",width:16,height:16,display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:800}}>{o.nr}</span>}
-            {o.icon} {o.name}
-          </button>
-        ))}
-      </div>
-      {/* Schubladen */}
-      {(gewOrtObj?.faecher||[]).length>0 && (
-        <div style={{marginBottom:8}}>
-          <div style={{fontSize:14,fontWeight:700,color:"#9ca3af",marginBottom:4}}>SCHUBLADE:</div>
-          <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
-            <SchBtn label="– keine" aktiv={gewSch===null} onClick={()=>setGewSch(null)} n={0}/>
-            {(gewOrtObj.faecher||[]).map(s=>(
-              <SchBtn key={s} label={`${s}`} aktiv={gewSch===s} onClick={()=>setGewSch(Number(s))} n={0}/>
-            ))}
-          </div>
-          {gewSch&&<div style={{fontSize:20,color:"white",background:"#e53e3e",padding:"3px 10px",borderRadius:6,fontWeight:800,marginTop:4,display:"inline-block"}}>✓ Schublade {gewSch}</div>}
-        </div>
-      )}
-      <div style={{display:"flex",gap:6}}>
-        <button onClick={()=>{if(gewOrt){onEinlagern(item,gewOrt,gewSch);setModus(null);}else alert("Bitte Lagerort wählen!");}}
-          style={{flex:2,padding:"11px",background:"#3d5c3f",color:"white",border:"none",borderRadius:8,cursor:"pointer",fontWeight:800,fontSize:14}}>
-          ✅ Einlagern
-        </button>
-        <button onClick={()=>setModus("edit")} style={{flex:1,padding:"11px",background:"#f59e0b",color:"white",border:"none",borderRadius:8,cursor:"pointer",fontWeight:700,fontSize:16}}>✏️ Edit</button>
-        <button onClick={()=>setModus(null)} style={{padding:"11px 12px",background:"#e5e7eb",color:"#374151",border:"none",borderRadius:8,cursor:"pointer",fontSize:14}}>✕</button>
-      </div>
-    </div>
-  );
-
-  // EDIT-MODUS
-  if(modus==="edit") return (
-    <div style={{padding:"14px 16px",background:"#fff9e6",borderBottom:isLast?"none":"1px solid #e5e7eb"}}>
-      <div style={{display:"flex",gap:6,marginBottom:6}}>
-        <input value={val.name??item.name} onChange={e=>setVal(p=>({...p,name:e.target.value}))} autoFocus
-          style={{flex:1,padding:"8px 10px",borderRadius:8,border:"2px solid #f59e0b",fontSize:20,outline:"none"}}/>
-        <VoiceBtn onResult={txt=>setVal(p=>({...p,name:txt.trim()}))}/>
-      </div>
-      <div style={{display:"flex",gap:6,marginBottom:6}}>
-        <input type="number" value={val.qty??item.qty}
-          onChange={e=>setVal(p=>({...p,qty:e.target.value}))}
-          onFocus={e=>e.target.select()}
-          onBlur={e=>setVal(p=>({...p,qty:parseFloat(e.target.value)||1}))}
-          style={{width:65,padding:"7px 8px",borderRadius:8,border:"1.5px solid #e5e7eb",fontSize:14,outline:"none"}}/>
-        <select value={val.unit??item.unit} onChange={e=>setVal(p=>({...p,unit:e.target.value}))}
-          style={{flex:1,padding:"7px 8px",borderRadius:8,border:"1.5px solid #e5e7eb",fontSize:14,outline:"none"}}>
-          {["Stück","kg","g","L","ml","Packung","Flasche","Dose","Glas","Beutel","Kasten"].map(u=><option key={u}>{u}</option>)}
-        </select>
-        <select value={item.shop||""} onChange={e=>onShop(item.id,e.target.value)}
-          style={{flex:1,padding:"7px 6px",borderRadius:8,border:"1.5px solid #e5e7eb",fontSize:18,outline:"none"}}>
-          {ALLE_SHOPS.map(s=><option key={s} value={s}>{s}</option>)}
-        </select>
-      </div>
-      <div style={{display:"flex",gap:6}}>
-        <button onClick={()=>{onUpdate(item.id,{name:val.name??item.name,qty:val.qty??item.qty,unit:val.unit??item.unit});setModus(null);}}
-          style={{flex:1,padding:"9px",background:"#f59e0b",color:"white",border:"none",borderRadius:8,cursor:"pointer",fontWeight:800,fontSize:14}}>✓ Speichern</button>
-        <button onClick={()=>setModus(null)} style={{padding:"9px 14px",background:"#e5e7eb",color:"#374151",border:"none",borderRadius:8,cursor:"pointer",fontSize:14}}>✕</button>
-      </div>
-    </div>
-  );
-
-  // NORMAL-ANSICHT
-  return (
-    <div style={{display:"flex",alignItems:"center",padding:"14px 16px",borderBottom:isLast?"none":"1px solid #f3f4f6",opacity:item.erledigt?0.4:1,gap:8}}>
-      <input type="checkbox" checked={item.erledigt} onChange={()=>onToggle(item.id)} style={{width:22,height:22,cursor:"pointer",accentColor:"#3d5c3f",flexShrink:0}}/>
-      <div style={{flex:1,cursor:item.erledigt?"default":"pointer"}} onClick={oeffnen}>
-        <span style={{fontSize:20,fontWeight:700,textDecoration:item.erledigt?"line-through":"none"}}>{item.name}</span>
-        <span style={{fontSize:16,color:"#6b7280",marginLeft:6}}>{item.qty} {item.unit}</span>
-        {!item.erledigt && <span style={{fontSize:14,color:"#3d5c3f",marginLeft:5}}>→ einlagern</span>}
-        {item.datum && <div style={{fontSize:16,color:"#d1d5db"}}>📅 {item.datum}</div>}
-      </div>
-      <select value={item.shop||""} onChange={e=>onShop(item.id,e.target.value)} style={{fontSize:14,border:"1px solid #e5e7eb",borderRadius:6,padding:"2px",maxWidth:68,flexShrink:0}}>
-        {ALLE_SHOPS.map(s=><option key={s} value={s}>{s}</option>)}
-      </select>
-      <button onClick={()=>onRemove(item.id)} style={{background:"#fee2e2",border:"none",cursor:"pointer",color:"#dc2626",width:32,height:32,borderRadius:6,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,flexShrink:0}}>×</button>
-    </div>
-  );
-};
-
 // ── EINKAUF TAB ───────────────────────────────────────────
-const EinkaufTab = ({einkauf, onAdd, onToggle, onRemove, onShop, onClear, onUpdate, onEinlagern, bestand}) => {
+const EinkaufTab = ({einkauf, onAdd, onToggle, onRemove, onShop, onClear}) => {
   const [gId, setGId] = useState("sm");
   const [shop, setShop] = useState("Kaufland");
   const [busy, setBusy] = useState(false);
@@ -846,7 +373,6 @@ const EinkaufTab = ({einkauf, onAdd, onToggle, onRemove, onShop, onClear, onUpda
   const wechsel = id => { setGId(id); const g=GRUPPEN.find(x=>x.id===id); setShop(g?.shops[0]||g?.name||""); };
   const defShop = () => { const g=GRUPPEN.find(x=>x.id===gId); return g?.shops.length ? shop : (g?.name||""); };
 
-  const [eToast, setEToast] = useState("");
   const hinzufuegen = async txt => {
     setBusy(true);
     try {
@@ -859,10 +385,7 @@ const EinkaufTab = ({einkauf, onAdd, onToggle, onRemove, onShop, onClear, onUpda
       } catch {
         items = parseText(txt).map(p=>({...p,shop:null}));
       }
-      const shop = defShop();
-      onAdd(items.map(i=>({...i, shop:i.shop||shop})));
-      setEToast(`✓ ${items.length} Artikel → ${shop}`);
-      setTimeout(()=>setEToast(""), 3000);
+      onAdd(items.map(i=>({...i, shop:i.shop||defShop()})));
     } catch(e) { console.error(e); }
     setBusy(false);
   };
@@ -876,10 +399,7 @@ const EinkaufTab = ({einkauf, onAdd, onToggle, onRemove, onShop, onClear, onUpda
         `Scanne Einkaufsliste. Shops:${ALLE_SHOPS.join(",")} oder null. NUR JSON-Array:[{"name":"X","qty":1,"unit":"Stück","shop":null}]`
       );
       onAdd(items.map(i=>({...i,shop:i.shop||defShop()})));
-    } catch(e) {
-      if(e.message==="KEIN_KEY") alert("📷 Foto-Scan benötigt einen Anthropic API-Key.\n\n⚙️ Einstellungen öffnen → API-Key eingeben → Starten");
-      else alert("Fehler: " + e.message);
-    }
+    } catch { alert("Foto-Scan benötigt Anthropic API-Key."); }
     setBusy(false);
   };
 
@@ -901,44 +421,43 @@ const EinkaufTab = ({einkauf, onAdd, onToggle, onRemove, onShop, onClear, onUpda
     <div>
       {/* Kategorie + Shop Auswahl */}
       <div style={{background:"white",borderRadius:14,padding:14,marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
-        <p style={{margin:"0 0 6px",fontSize:16,fontWeight:700,color:"#9ca3af",textTransform:"uppercase"}}>Kategorie</p>
+        <p style={{margin:"0 0 6px",fontSize:26,fontWeight:700,color:"#9ca3af",textTransform:"uppercase"}}>Kategorie</p>
         <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:10}}>
           {GRUPPEN.map(g => (
             <button key={g.id} onClick={()=>wechsel(g.id)}
-              style={{padding:"8px 12px",borderRadius:20,border:"2px solid",
+              style={{padding:"5px 9px",borderRadius:20,border:"2px solid",
                 borderColor:gId===g.id?"#3d5c3f":"#e5e7eb",
                 background:gId===g.id?"#3d5c3f":"white",
-                color:gId===g.id?"white":"#374151",fontSize:20,cursor:"pointer",fontWeight:700}}>
+                color:gId===g.id?"white":"#374151",fontSize:24,cursor:"pointer",fontWeight:700}}>
               {g.icon} {g.name}
             </button>
           ))}
         </div>
         {gr?.shops.length > 0 && <>
-          <p style={{margin:"0 0 5px",fontSize:16,fontWeight:700,color:"#9ca3af",textTransform:"uppercase"}}>Shop</p>
+          <p style={{margin:"0 0 5px",fontSize:26,fontWeight:700,color:"#9ca3af",textTransform:"uppercase"}}>Shop</p>
           <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:10}}>
             {gr.shops.map(s => {
               const f=shopFarbe(s); const a=shop===s;
               return (
                 <button key={s} onClick={()=>setShop(s)}
-                  style={{padding:"8px 12px",borderRadius:20,border:"2px solid",
+                  style={{padding:"5px 10px",borderRadius:20,border:"2px solid",
                     borderColor:a?f.bg:"#e5e7eb",background:a?f.bg:"white",
-                    color:a?f.fg:"#374151",fontSize:20,cursor:"pointer",fontWeight:700}}>
+                    color:a?f.fg:"#374151",fontSize:24,cursor:"pointer",fontWeight:700}}>
                   {s}
                 </button>
               );
             })}
           </div>
         </>}
-        <EingabeFeld ph="Artikel eingeben… (Komma = mehrere)" onOK={hinzufuegen} onBild={fotoScan} busy={busy}/>
-        {eToast && <div style={{background:"#3d5c3f",color:"white",borderRadius:10,padding:"8px 14px",fontSize:16,fontWeight:700,textAlign:"center",animation:"fadein 0.3s ease",marginTop:4}}>{eToast}</div>}
+        <EingabeFeld ph="Artikel eingeben… (Komma = mehrere)" onOK={txt => hinzufuegen(txt, neuSch)} onBild={fotoScan} busy={busy}/>
       </div>
 
       {/* Fortschritt */}
       {einkauf.length > 0 && (
         <div style={{background:"white",borderRadius:14,padding:12,marginBottom:10,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
-            <span style={{fontSize:18,fontWeight:600}}>{done}/{einkauf.length} erledigt</span>
-            {done>0 && <button onClick={onClear} style={{background:"#fee2e2",border:"none",color:"#dc2626",cursor:"pointer",fontSize:14,padding:"6px 10px",borderRadius:6,fontWeight:600}}>Erledigte löschen</button>}
+            <span style={{fontSize:21,fontWeight:600}}>{done}/{einkauf.length} erledigt</span>
+            {done>0 && <button onClick={onClear} style={{background:"#fee2e2",border:"none",color:"#dc2626",cursor:"pointer",fontSize:19,padding:"3px 8px",borderRadius:6,fontWeight:600}}>Erledigte löschen</button>}
           </div>
           <div style={{height:5,background:"#f3f4f6",borderRadius:3,overflow:"hidden"}}>
             <div style={{height:"100%",width:`${einkauf.length?(done/einkauf.length)*100:0}%`,background:"linear-gradient(90deg,#3d5c3f,#4a7a4d)",borderRadius:3,transition:"width 0.3s"}}/>
@@ -951,7 +470,7 @@ const EinkaufTab = ({einkauf, onAdd, onToggle, onRemove, onShop, onClear, onUpda
         <div style={{display:"flex",gap:5,marginBottom:10,flexWrap:"wrap"}}>
           {["Alle",...belegt.map(g=>g.id)].map(f => {
             const g = GRUPPEN.find(x=>x.id===f);
-            return <button key={f} onClick={()=>setFilter(f)} style={{padding:"7px 11px",borderRadius:20,border:"2px solid",borderColor:filter===f?"#3d5c3f":"#e5e7eb",background:filter===f?"#3d5c3f":"white",color:filter===f?"white":"#374151",fontSize:14,cursor:"pointer",fontWeight:600}}>{g?`${g.icon} ${g.name}`:"Alle"}</button>;
+            return <button key={f} onClick={()=>setFilter(f)} style={{padding:"4px 8px",borderRadius:20,border:"2px solid",borderColor:filter===f?"#3d5c3f":"#e5e7eb",background:filter===f?"#3d5c3f":"white",color:filter===f?"white":"#374151",fontSize:19,cursor:"pointer",fontWeight:600}}>{g?`${g.icon} ${g.name}`:"Alle"}</button>;
           })}
         </div>
       )}
@@ -964,11 +483,21 @@ const EinkaufTab = ({einkauf, onAdd, onToggle, onRemove, onShop, onClear, onUpda
           return (
             <div key={`${gk}-${sn}`} style={{background:"white",borderRadius:14,marginBottom:10,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
               <div style={{padding:"9px 14px",background:f.bg,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <span style={{color:f.fg,fontWeight:800,fontSize:18}}>{g?.icon} {sn}</span>
-                <span style={{color:f.fg,fontSize:14,background:"rgba(0,0,0,0.18)",padding:"5px 10px",borderRadius:10}}>{d}/{items.length}</span>
+                <span style={{color:f.fg,fontWeight:800,fontSize:13}}>{g?.icon} {sn}</span>
+                <span style={{color:f.fg,fontSize:19,background:"rgba(0,0,0,0.18)",padding:"2px 7px",borderRadius:10}}>{d}/{items.length}</span>
               </div>
               {items.map((item,i) => (
-                <EinkaufArtikel key={item.id} item={item} onToggle={onToggle} onRemove={onRemove} onShop={onShop} onUpdate={onUpdate} onEinlagern={onEinlagern} bestand={bestand||{}} isLast={i===items.length-1}/>
+                <div key={item.id} style={{display:"flex",alignItems:"center",padding:"9px 12px",borderBottom:i<items.length-1?"1px solid #f3f4f6":"none",opacity:item.erledigt?0.4:1,gap:8}}>
+                  <input type="checkbox" checked={item.erledigt} onChange={()=>onToggle(item.id)} style={{width:17,height:17,cursor:"pointer",accentColor:"#3d5c3f",flexShrink:0}}/>
+                  <div style={{flex:1,textDecoration:item.erledigt?"line-through":"none"}}>
+                    <span style={{fontSize:26,fontWeight:600}}>{item.name}</span>
+                    <span style={{fontSize:24,color:"#6b7280",marginLeft:6}}>{item.qty} {item.unit}</span>
+                  </div>
+                  <select value={item.shop||""} onChange={e=>onShop(item.id,e.target.value)} style={{fontSize:26,border:"1px solid #e5e7eb",borderRadius:6,padding:"2px",maxWidth:70}}>
+                    {ALLE_SHOPS.map(s=><option key={s} value={s}>{s}</option>)}
+                  </select>
+                  <button onClick={()=>onRemove(item.id)} style={{background:"#fee2e2",border:"none",cursor:"pointer",color:"#dc2626",width:24,height:24,borderRadius:6,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13}}>×</button>
+                </div>
               ))}
             </div>
           );
@@ -977,9 +506,9 @@ const EinkaufTab = ({einkauf, onAdd, onToggle, onRemove, onShop, onClear, onUpda
 
       {einkauf.length===0 && (
         <div style={{textAlign:"center",padding:"32px 16px",color:"#9ca3af"}}>
-          <div style={{fontSize:20}}>🛒</div>
-          <p style={{margin:"8px 0 4px",fontSize:16,fontWeight:600}}>Einkaufsliste ist leer</p>
-          <p style={{fontSize:20}}>Kategorie & Shop wählen, dann Artikel eingeben</p>
+          <div style={{fontSize:36}}>🛒</div>
+          <p style={{margin:"8px 0 4px",fontSize:26,fontWeight:600}}>Einkaufsliste ist leer</p>
+          <p style={{fontSize:12}}>Kategorie & Shop wählen, dann Artikel eingeben</p>
         </div>
       )}
     </div>
@@ -997,22 +526,22 @@ const UebersichtTab = ({bestand, einkauf, kassenbons, todos}) => {
         {[{i:"📦",l:"Im Bestand",v:gB,c:"#3d5c3f"},{i:"🛒",l:"Einzukaufen",v:oE,c:"#dc2626"},{i:"🧾",l:"Kassenbons",v:kassenbons.length,c:"#6366f1"},{i:"✅",l:"Aufgaben",v:oT,c:"#f97316"}].map((k,i) => (
           <div key={i} style={{background:"white",borderRadius:14,padding:14,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
             <div style={{fontSize:20}}>{k.i}</div>
-            <div style={{fontSize:16,fontWeight:800,color:k.c,marginTop:2}}>{k.v}</div>
-            <div style={{fontSize:14,color:"#6b7280",marginTop:2}}>{k.l}</div>
+            <div style={{fontSize:26,fontWeight:800,color:k.c,marginTop:2}}>{k.v}</div>
+            <div style={{fontSize:19,color:"#6b7280",marginTop:2}}>{k.l}</div>
           </div>
         ))}
       </div>
       <div style={{background:"white",borderRadius:14,padding:14,marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
-        <h3 style={{margin:"0 0 10px",fontSize:16,fontWeight:800}}>📦 Bestand</h3>
+        <h3 style={{margin:"0 0 10px",fontSize:26,fontWeight:800}}>📦 Bestand</h3>
         {BEREICHE.map(b => {
           const tot = b.orte.reduce((s,o)=>s+(bestand[o.id]||[]).length,0);
           return (
             <div key={b.id} style={{marginBottom:10}}>
-              <div style={{display:"flex",justifyContent:"space-between",fontSize:18,fontWeight:700,padding:"3px 0",borderBottom:"1px solid #f3f4f6",marginBottom:3}}>
+              <div style={{display:"flex",justifyContent:"space-between",fontSize:21,fontWeight:700,padding:"3px 0",borderBottom:"1px solid #f3f4f6",marginBottom:3}}>
                 <span>{b.icon} {b.name}</span><span style={{color:"#3d5c3f"}}>{tot}</span>
               </div>
               {b.orte.map(o => {const c=(bestand[o.id]||[]).length;return(
-                <div key={o.id} style={{display:"flex",justifyContent:"space-between",padding:"2px 10px",fontSize:14,color:"#6b7280"}}>
+                <div key={o.id} style={{display:"flex",justifyContent:"space-between",padding:"2px 10px",fontSize:19,color:"#6b7280"}}>
                   <span>{o.icon} {o.name}</span>
                   <span style={{fontWeight:c?700:400,color:c?"#374151":"#d1d5db"}}>{c||"—"}</span>
                 </div>
@@ -1022,13 +551,13 @@ const UebersichtTab = ({bestand, einkauf, kassenbons, todos}) => {
         })}
       </div>
       <div style={{background:"white",borderRadius:14,padding:14,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
-        <h3 style={{margin:"0 0 10px",fontSize:16,fontWeight:800}}>🛒 Einkauf</h3>
+        <h3 style={{margin:"0 0 10px",fontSize:26,fontWeight:800}}>🛒 Einkauf</h3>
         {GRUPPEN.map(g => {
           const items = einkauf.filter(i=>shopGruppe(i.shop)?.id===g.id);
           if (!items.length) return null;
           const d = items.filter(i=>i.erledigt).length;
           return (
-            <div key={g.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 0",borderBottom:"1px solid #f3f4f6",fontSize:20}}>
+            <div key={g.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 0",borderBottom:"1px solid #f3f4f6",fontSize:12}}>
               <span>{g.icon} {g.name}</span>
               <div style={{display:"flex",alignItems:"center",gap:7}}>
                 <div style={{height:4,width:50,background:"#f3f4f6",borderRadius:2}}>
@@ -1039,7 +568,7 @@ const UebersichtTab = ({bestand, einkauf, kassenbons, todos}) => {
             </div>
           );
         })}
-        {!einkauf.length && <p style={{fontSize:20,color:"#9ca3af",margin:0}}>Keine Einkäufe</p>}
+        {!einkauf.length && <p style={{fontSize:24,color:"#9ca3af",margin:0}}>Keine Einkäufe</p>}
       </div>
     </div>
   );
@@ -1060,32 +589,29 @@ const KassenbonTab = ({kassenbons, setKassenbons, onAddEinkauf}) => {
         `Lies Kassenbon. NUR JSON:{"store":"X","date":"X","total":"X","items":[{"name":"X","qty":1,"price":"X"}]}`
       );
       if(b){const n={...b,id:uid(),scanDatum:datum()};setAkt(n);setKassenbons(p=>[n,...p]);}
-    } catch(e) {
-      if(e.message==="KEIN_KEY") alert("🧾 Kassenbon-Scan benötigt einen Anthropic API-Key.\n\n⚙️ Einstellungen öffnen → API-Key eingeben → Starten");
-      else alert("Fehler: " + e.message);
-    }
+    } catch { alert("Kassenbons benötigen Anthropic API-Key (in Einstellungen eintragen)."); }
     setBusy(false); e.target.value="";
   };
   return (
     <div>
       <div style={{background:"white",borderRadius:14,padding:16,marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
-        <h3 style={{margin:"0 0 10px",fontSize:14,fontWeight:800}}>🧾 Kassenbon einlesen</h3>
+        <h3 style={{margin:"0 0 10px",fontSize:19,fontWeight:800}}>🧾 Kassenbon einlesen</h3>
         <button onClick={()=>ref.current?.click()} disabled={busy}
-          style={{width:"100%",padding:"14px",borderRadius:12,border:"2px dashed #3d5c3f",background:"#f0f4f1",fontSize:16,cursor:"pointer",fontWeight:600,color:"#2c3e2d"}}>
+          style={{width:"100%",padding:"14px",borderRadius:12,border:"2px dashed #3d5c3f",background:"#f0f4f1",fontSize:26,cursor:"pointer",fontWeight:600,color:"#2c3e2d"}}>
           {busy?"⏳ Wird gelesen…":"📷 Kassenbon hochladen / fotografieren"}
         </button>
         <input ref={ref} type="file" accept="image/*" style={{display:"none"}} onChange={scan}/>
-        <p style={{margin:"6px 0 0",fontSize:14,color:"#9ca3af",textAlign:"center"}}>Benötigt Anthropic API-Key</p>
+        <p style={{margin:"6px 0 0",fontSize:19,color:"#9ca3af",textAlign:"center"}}>Benötigt Anthropic API-Key</p>
       </div>
       {akt && (
         <div style={{background:"white",borderRadius:14,marginBottom:12,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
-          <div style={{padding:"15px 16px",background:"#2c3e2d",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-            <div><div style={{color:"white",fontWeight:800,fontSize:14}}>{akt.store||"?"}</div><div style={{color:"rgba(255,255,255,0.7)",fontSize:14}}>{akt.date||akt.scanDatum} · {akt.total}</div></div>
-            <button onClick={()=>setAkt(null)} style={{background:"rgba(255,255,255,0.15)",border:"none",cursor:"pointer",color:"white",width:32,height:32,borderRadius:8,fontSize:20}}>×</button>
+          <div style={{padding:"12px 14px",background:"#2c3e2d",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div><div style={{color:"white",fontWeight:800,fontSize:15}}>{akt.store||"?"}</div><div style={{color:"rgba(255,255,255,0.7)",fontSize:11}}>{akt.date||akt.scanDatum} · {akt.total}</div></div>
+            <button onClick={()=>setAkt(null)} style={{background:"rgba(255,255,255,0.15)",border:"none",cursor:"pointer",color:"white",width:28,height:28,borderRadius:8,fontSize:16}}>×</button>
           </div>
           <div style={{padding:"6px 14px"}}>
             {(akt.items||[]).map((item,i)=>(
-              <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:i<akt.items.length-1?"1px solid #f3f4f6":"none",fontSize:18}}>
+              <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:i<akt.items.length-1?"1px solid #f3f4f6":"none",fontSize:13}}>
                 <span>{item.qty>1?`${item.qty}× `:""}{item.name}</span>
                 <span style={{color:"#6b7280",fontWeight:600}}>{item.price}</span>
               </div>
@@ -1093,7 +619,7 @@ const KassenbonTab = ({kassenbons, setKassenbons, onAddEinkauf}) => {
           </div>
           <div style={{padding:"10px 14px",borderTop:"2px solid #f3f4f6"}}>
             <button onClick={()=>onAddEinkauf((akt.items||[]).map(i=>({name:i.name,qty:i.qty||1,unit:"Stück",shop:akt.store||"Kaufland"})))}
-              style={{width:"100%",padding:"10px",background:"#3d5c3f",color:"white",border:"none",borderRadius:10,cursor:"pointer",fontSize:18,fontWeight:700}}>
+              style={{width:"100%",padding:"10px",background:"#3d5c3f",color:"white",border:"none",borderRadius:10,cursor:"pointer",fontSize:21,fontWeight:700}}>
               → Zur Einkaufsliste
             </button>
           </div>
@@ -1101,11 +627,11 @@ const KassenbonTab = ({kassenbons, setKassenbons, onAddEinkauf}) => {
       )}
       {kassenbons.slice(0,10).map(b=>(
         <button key={b.id} onClick={()=>setAkt(b)} style={{width:"100%",background:"white",borderRadius:12,padding:"10px 14px",marginBottom:8,border:"1.5px solid",borderColor:akt?.id===b.id?"#3d5c3f":"#f3f4f6",cursor:"pointer",textAlign:"left",boxShadow:"0 1px 4px rgba(0,0,0,0.05)"}}>
-          <div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontWeight:700,fontSize:18}}>{b.store||"?"}</span><span style={{color:"#3d5c3f",fontWeight:800}}>{b.total}</span></div>
-          <div style={{fontSize:14,color:"#9ca3af"}}>{b.scanDatum} · {(b.items||[]).length} Artikel</div>
+          <div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontWeight:700,fontSize:13}}>{b.store||"?"}</span><span style={{color:"#3d5c3f",fontWeight:800}}>{b.total}</span></div>
+          <div style={{fontSize:19,color:"#9ca3af"}}>{b.scanDatum} · {(b.items||[]).length} Artikel</div>
         </button>
       ))}
-      {!kassenbons.length&&!busy&&<div style={{textAlign:"center",padding:"32px",color:"#9ca3af"}}><div style={{fontSize:20}}>🧾</div><p style={{margin:"8px 0 0",fontSize:16,fontWeight:600}}>Keine Kassenbons</p></div>}
+      {!kassenbons.length&&!busy&&<div style={{textAlign:"center",padding:"32px",color:"#9ca3af"}}><div style={{fontSize:36}}>🧾</div><p style={{margin:"8px 0 0",fontSize:26,fontWeight:600}}>Keine Kassenbons</p></div>}
     </div>
   );
 };
@@ -1120,18 +646,18 @@ const AufgabenTab = ({todos, onAdd, onToggle, onRemove}) => {
   return (
     <div>
       <div style={{background:"white",borderRadius:14,padding:14,marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
-        <p style={{margin:"0 0 6px",fontSize:16,fontWeight:700,color:"#9ca3af",textTransform:"uppercase"}}>Priorität</p>
+        <p style={{margin:"0 0 6px",fontSize:26,fontWeight:700,color:"#9ca3af",textTransform:"uppercase"}}>Priorität</p>
         <div style={{display:"flex",gap:6,marginBottom:10}}>
           {PRIOS.map(p=>(
             <button key={p.id} onClick={()=>setPrio(p.id)}
-              style={{flex:1,padding:"7px 4px",borderRadius:10,border:"2px solid",borderColor:prio===p.id?p.c:"#e5e7eb",background:prio===p.id?p.c+"18":"white",color:prio===p.id?p.c:"#374151",fontSize:20,cursor:"pointer",fontWeight:700}}>
+              style={{flex:1,padding:"7px 4px",borderRadius:10,border:"2px solid",borderColor:prio===p.id?p.c:"#e5e7eb",background:prio===p.id?p.c+"18":"white",color:prio===p.id?p.c:"#374151",fontSize:24,cursor:"pointer",fontWeight:700}}>
               {p.l}
             </button>
           ))}
         </div>
         <div style={{display:"flex",gap:8}}>
           <input value={txt} onChange={e=>setTxt(e.target.value)} onKeyDown={e=>e.key==="Enter"&&add()} placeholder="Neue Aufgabe…"
-            style={{flex:1,padding:"14px 16px",borderRadius:10,border:"1.5px solid #e5e7eb",fontSize:16,outline:"none",background:"#fafafa"}}/>
+            style={{flex:1,padding:"10px 12px",borderRadius:10,border:"1.5px solid #e5e7eb",fontSize:26,outline:"none",background:"#fafafa"}}/>
           <Btn onClick={add} disabled={!txt.trim()}>+</Btn>
         </div>
       </div>
@@ -1139,107 +665,28 @@ const AufgabenTab = ({todos, onAdd, onToggle, onRemove}) => {
         <div style={{display:"flex",gap:8,marginBottom:12}}>
           {[{v:todos.filter(t=>!t.erledigt).length,l:"Offen",c:"#f97316"},{v:todos.filter(t=>t.erledigt).length,l:"Erledigt",c:"#3d5c3f"}].map((s,i)=>(
             <div key={i} style={{flex:1,background:"white",borderRadius:10,padding:"10px",textAlign:"center",boxShadow:"0 1px 4px rgba(0,0,0,0.05)"}}>
-              <div style={{fontSize:16,fontWeight:800,color:s.c}}>{s.v}</div>
-              <div style={{fontSize:16,color:"#9ca3af"}}>{s.l}</div>
+              <div style={{fontSize:26,fontWeight:800,color:s.c}}>{s.v}</div>
+              <div style={{fontSize:26,color:"#9ca3af"}}>{s.l}</div>
             </div>
           ))}
         </div>
       )}
+      {zuletzt && <div style={{background:"#3d5c3f",color:"white",borderRadius:10,padding:"8px 14px",fontSize:19,fontWeight:700,textAlign:"center",marginBottom:8}}>{zuletzt}</div>}
       <div style={{background:"white",borderRadius:14,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
         {!sorted.length
-          ?<div style={{textAlign:"center",padding:"32px",color:"#9ca3af"}}><div style={{fontSize:20}}>✅</div><p style={{margin:"8px 0 0",fontSize:16,fontWeight:600}}>Keine Aufgaben</p></div>
+          ?<div style={{textAlign:"center",padding:"32px",color:"#9ca3af"}}><div style={{fontSize:36}}>✅</div><p style={{margin:"8px 0 0",fontSize:26,fontWeight:600}}>Keine Aufgaben</p></div>
           :sorted.map((t,i)=>{const p=PRIOS.find(x=>x.id===t.prioritaet)||PRIOS[2];return(
             <div key={t.id} style={{display:"flex",alignItems:"center",padding:"10px 14px",borderBottom:i<sorted.length-1?"1px solid #f3f4f6":"none",opacity:t.erledigt?0.4:1,gap:10}}>
-              <input type="checkbox" checked={t.erledigt} onChange={()=>onToggle(t.id)} style={{width:22,height:22,cursor:"pointer",accentColor:p.c,flexShrink:0}}/>
+              <input type="checkbox" checked={t.erledigt} onChange={()=>onToggle(t.id)} style={{width:18,height:18,cursor:"pointer",accentColor:p.c,flexShrink:0}}/>
               <div style={{flex:1}}>
-                <span style={{fontSize:16,fontWeight:600,textDecoration:t.erledigt?"line-through":"none"}}>{t.text}</span>
-                <div style={{fontSize:16,color:p.c,fontWeight:700,marginTop:1}}>{p.l}</div>
+                <span style={{fontSize:26,fontWeight:600,textDecoration:t.erledigt?"line-through":"none"}}>{t.text}</span>
+                <div style={{fontSize:26,color:p.c,fontWeight:700,marginTop:1}}>{p.l}</div>
               </div>
-              <span style={{fontSize:18,color:"#d1d5db"}}>{t.datum}</span>
-              <button onClick={()=>onRemove(t.id)} style={{background:"#fee2e2",border:"none",cursor:"pointer",color:"#dc2626",width:30,height:30,borderRadius:6,fontWeight:700,fontSize:18,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
+              <span style={{fontSize:21,color:"#d1d5db"}}>{t.datum}</span>
+              <button onClick={()=>onRemove(t.id)} style={{background:"#fee2e2",border:"none",cursor:"pointer",color:"#dc2626",width:24,height:24,borderRadius:6,fontWeight:700,fontSize:21,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
             </div>
           );})}
       </div>
-    </div>
-  );
-};
-
-// ── SUCHE TAB ─────────────────────────────────────────────
-const SucheTab = ({bestand}) => {
-  const [query, setQuery] = useState("");
-
-  // Alle Artikel mit Standort zusammenführen
-  const alleArtikel = ALLE_ORTE.flatMap(ort => {
-    const items = bestand[ort.id] || [];
-    return items.map(item => ({...item, ort}));
-  });
-
-  const treffer = query.trim().length < 2 ? [] : alleArtikel.filter(item =>
-    item.name.toLowerCase().includes(query.toLowerCase())
-  ).sort((a,b) => a.name.localeCompare(b.name, "de"));
-
-  const gesamt = alleArtikel.length;
-
-  return (
-    <div>
-      <div style={{background:"white",borderRadius:14,padding:14,marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
-        <p style={{margin:"0 0 8px",fontSize:18,fontWeight:700,color:"#374151"}}>🔍 Artikel suchen</p>
-        <input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Artikelname eingeben…"
-          style={{width:"100%",padding:"11px 12px",borderRadius:10,border:"1.5px solid #3d5c3f",fontSize:14,outline:"none",background:"#fafafa"}}
-          autoFocus/>
-        <p style={{margin:"6px 0 0",fontSize:14,color:"#9ca3af"}}>{gesamt} Artikel im Bestand durchsuchen</p>
-      </div>
-
-      {query.trim().length >= 2 && (
-        <div style={{background:"white",borderRadius:14,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
-          <div style={{padding:"8px 14px",background:"#f0f4f1",fontSize:20,fontWeight:700,color:"#374151"}}>
-            {treffer.length > 0 ? `${treffer.length} Treffer für "${query}"` : `Nichts gefunden für "${query}"`}
-          </div>
-          {treffer.length === 0 ? (
-            <div style={{textAlign:"center",padding:"24px",color:"#9ca3af"}}>
-              <div style={{fontSize:20}}>🔍</div>
-              <p style={{margin:"8px 0 0",fontSize:18}}>Kein Artikel gefunden</p>
-            </div>
-          ) : treffer.map((item,i) => (
-            <div key={item.id} style={{display:"flex",alignItems:"center",padding:"10px 14px",borderBottom:i<treffer.length-1?"1px solid #f3f4f6":"none",gap:10}}>
-              <div style={{flex:1}}>
-                <div style={{fontSize:16,fontWeight:700}}>{item.name}</div>
-                <div style={{fontSize:20,color:"#6b7280",marginTop:1}}>{item.qty} {item.unit}</div>
-              </div>
-              <div style={{textAlign:"right"}}>
-                <div style={{fontSize:20,fontWeight:600,color:"#3d5c3f"}}>{item.ort.icon} {item.ort.name}</div>
-                <div style={{fontSize:16,color:"#9ca3af"}}>{item.ort.bName}{item.sch ? ` · Schublade ${item.sch}` : ""}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {query.trim().length < 2 && gesamt > 0 && (
-        <div style={{background:"white",borderRadius:14,padding:14,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
-          <p style={{fontSize:20,fontWeight:700,color:"#9ca3af",margin:"0 0 10px",textTransform:"uppercase"}}>Alle Artikel A–Z</p>
-          {[...alleArtikel].sort((a,b)=>a.name.localeCompare(b.name,"de")).map((item,i,arr) => (
-            <div key={item.id} style={{display:"flex",alignItems:"center",padding:"8px 0",borderBottom:i<arr.length-1?"1px solid #f3f4f6":"none",gap:10}}>
-              <div style={{flex:1}}>
-                <span style={{fontSize:18,fontWeight:600}}>{item.name}</span>
-                <span style={{fontSize:14,color:"#6b7280",marginLeft:6}}>{item.qty} {item.unit}</span>
-              </div>
-              <div style={{textAlign:"right"}}>
-                <div style={{fontSize:14,fontWeight:600,color:"#3d5c3f"}}>{item.ort.icon} {item.ort.name}</div>
-                <div style={{fontSize:16,color:"#9ca3af"}}>{item.ort.bName}{item.sch ? ` · Sch.${item.sch}` : ""}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {gesamt === 0 && (
-        <div style={{textAlign:"center",padding:"32px",color:"#9ca3af"}}>
-          <div style={{fontSize:20}}>📦</div>
-          <p style={{margin:"8px 0 0",fontSize:16,fontWeight:600}}>Noch nichts im Bestand</p>
-          <p style={{margin:"4px 0 0",fontSize:20}}>Erst Artikel im Bestand-Tab eingeben</p>
-        </div>
-      )}
     </div>
   );
 };
@@ -1259,69 +706,36 @@ const App = () => {
   const laden = useCallback(async (still=false) => {
     const fb = lsGet("hm_fb"); if(!fb) return;
     if(!still) setSync("syncing");
-    
-    // Zuerst lokalen Cache laden (sofort verfügbar)
-    const bc=cacheGet("bestand"), ec=cacheGet("einkauf"), kc=cacheGet("kassenbons"), tc=cacheGet("todos");
-    if(bc && typeof bc==="object") setBestand(bc);
-    if(ec) setEinkauf(Array.isArray(ec)?ec:Object.values(ec));
-    if(kc) setKassenbons(Array.isArray(kc)?kc:Object.values(kc));
-    if(tc) setTodos(Array.isArray(tc)?tc:Object.values(tc));
-    if(bc||ec||kc||tc) setGeladen(true); // Zeige App sofort mit Cache-Daten
-    
-    // Dann Firebase laden (Sync)
     try {
       const [b,e,k,t] = await Promise.all([fbLesen("bestand"),fbLesen("einkauf"),fbLesen("kassenbons"),fbLesen("todos")]);
-      if(b && typeof b==="object") { setBestand(b); if(bestandRef) bestandRef.current=b; }
+      if(b && typeof b==="object") setBestand(b);
       if(e) setEinkauf(Array.isArray(e)?e:Object.values(e));
       if(k) setKassenbons(Array.isArray(k)?k:Object.values(k));
       if(t) setTodos(Array.isArray(t)?t:Object.values(t));
       setSync("ok");
-    } catch { setSync(bc||ec?"cache":"err"); }
+    } catch { setSync("err"); }
     setGeladen(true);
   }, []);
 
   useEffect(() => { if(aktiv) laden(); }, [aktiv]);
   useEffect(() => {
     if(!aktiv) return;
-    const iv = setInterval(() => {
-      if(!writing.current) laden(true);
-    }, 8000);
+    const iv = setInterval(() => { if(!writing.current) laden(true); }, 8000);
     return () => clearInterval(iv);
   }, [aktiv, laden]);
 
   const speichern = useCallback(async (path, data) => {
     writing.current=true; setSync("syncing");
-    writing.current = true; // keep blocking poll
     await fbSchreiben(path, data);
-    setSync("ok");
-    // Keep writing=true for 15s to prevent poll from overwriting
-    setTimeout(() => { writing.current = false; }, 15000);
+    setSync("ok"); writing.current=false;
   }, []);
 
-  const bestandRef = useRef({});
-  const addBestand = (id,items) => setBestand(p=>{
-    const n={...p,[id]:[...(p[id]||[]),...items.map(i=>({...i,id:uid(),datum:datum()}))]};
-    bestandRef.current=n;
-    speichern("bestand",n);
-    return n;
-  });
-  const remBestand = (id,iid) => setBestand(p=>{
-    const n={...p,[id]:(p[id]||[]).filter(i=>i.id!==iid)};
-    bestandRef.current=n;
-    speichern("bestand",n);
-    return n;
-  });
+  const addBestand = (id,items) => setBestand(p=>{const n={...p,[id]:[...(p[id]||[]),...items.map(i=>({...i,id:uid(),datum:datum()}))]};speichern("bestand",n);return n;});
+  const remBestand = (id,iid) => setBestand(p=>{const n={...p,[id]:(p[id]||[]).filter(i=>i.id!==iid)};speichern("bestand",n);return n;});
   const addEinkauf = items => setEinkauf(p=>{const n=[...p,...items.map(i=>({...i,id:uid(),erledigt:false,datum:datum()}))];speichern("einkauf",n);return n;});
   const togEinkauf = id => setEinkauf(p=>{const n=p.map(i=>i.id===id?{...i,erledigt:!i.erledigt}:i);speichern("einkauf",n);return n;});
   const remEinkauf = id => setEinkauf(p=>{const n=p.filter(i=>i.id!==id);speichern("einkauf",n);return n;});
   const shopEinkauf = (id,s) => setEinkauf(p=>{const n=p.map(i=>i.id===id?{...i,shop:s}:i);speichern("einkauf",n);return n;});
-  const updateEinkauf = (id,felder) => setEinkauf(p=>{const n=p.map(i=>i.id===id?{...i,...felder}:i);speichern("einkauf",n);return n;});
-  const einlagern = (item, ortId, sch) => {
-    // Artikel in Bestand hinzufügen
-    addBestand(ortId, [{name:item.name, qty:item.qty, unit:item.unit, sch: sch ?? null}]);
-    // Als erledigt markieren in Einkaufsliste
-    setEinkauf(p=>{const n=p.map(i=>i.id===item.id?{...i,erledigt:true}:i);speichern("einkauf",n);return n;});
-  };
   const clearEinkauf = () => setEinkauf(p=>{const n=p.filter(i=>!i.erledigt);speichern("einkauf",n);return n;});
   const addTodo = (txt,pr) => setTodos(p=>{const n=[{id:uid(),text:txt,prioritaet:pr,erledigt:false,datum:datum()},...p];speichern("todos",n);return n;});
   const togTodo = id => setTodos(p=>{const n=p.map(t=>t.id===id?{...t,erledigt:!t.erledigt}:t);speichern("todos",n);return n;});
@@ -1331,59 +745,57 @@ const App = () => {
   if(!aktiv) return <Einrichtung onStart={()=>setAktiv(true)}/>;
 
   if(!geladen) return (
-    <div style={{width:"100%",minHeight:"100vh",background:"#f5f5f0",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:12,color:"#6b7280"}}>
-      <span style={{fontSize:20,animation:"spin 1s linear infinite",display:"inline-block"}}>🔄</span>
-      <p style={{margin:0,fontSize:16,fontWeight:600}}>Lade Daten…</p>
+    <div style={{maxWidth:500,margin:"0 auto",minHeight:"100vh",background:"#f5f5f0",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:12,color:"#6b7280"}}>
+      <span style={{fontSize:40,animation:"spin 1s linear infinite",display:"inline-block"}}>🔄</span>
+      <p style={{margin:0,fontSize:26,fontWeight:600}}>Lade Daten…</p>
     </div>
   );
 
   const gB = Object.values(bestand).reduce((s,a)=>s+a.length,0);
   const oE = einkauf.filter(i=>!i.erledigt).length;
   const oT = todos.filter(t=>!t.erledigt).length;
-  const TABS = [{id:"bestand",l:"Bestand",i:"📦"},{id:"einkauf",l:"Einkauf",i:"🛒"},{id:"suche",l:"Suche",i:"🔍"},{id:"kassenbon",l:"Kassenbon",i:"🧾"},{id:"aufgaben",l:"Aufgaben",i:"✅"}];
+  const TABS = [{id:"bestand",l:"Bestand",i:"📦"},{id:"einkauf",l:"Einkauf",i:"🛒"},{id:"uebersicht",l:"Übersicht",i:"📊"},{id:"kassenbon",l:"Kassenbon",i:"🧾"},{id:"aufgaben",l:"Aufgaben",i:"✅"}];
   const sC = sync==="ok"?"#4ade80":sync==="err"?"#f87171":"#fbbf24";
 
   return (
-    <div style={{fontFamily:"'Segoe UI',system-ui,sans-serif",width:"100%",minHeight:"100vh",background:"#f5f5f0",display:"flex",flexDirection:"column"}}>
+    <div style={{fontFamily:"'Segoe UI',system-ui,sans-serif",maxWidth:500,margin:"0 auto",minHeight:"100vh",background:"#f5f5f0",paddingBottom:72}}>
       <div style={{background:"linear-gradient(135deg,#2c3e2d,#3d5c3f)",padding:"14px 18px 10px",color:"white"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-          <h1 style={{margin:0,fontSize:14,fontWeight:800}}>🏠 Haushalt Manager</h1>
+          <h1 style={{margin:0,fontSize:19,fontWeight:800}}>🏠 Haushalt Manager</h1>
           <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:3}}>
-            <span style={{fontSize:16,background:"rgba(255,255,255,0.15)",padding:"3px 7px",borderRadius:10,display:"flex",alignItems:"center",gap:3}}>
+            <span style={{fontSize:26,background:"rgba(255,255,255,0.15)",padding:"3px 7px",borderRadius:10,display:"flex",alignItems:"center",gap:3}}>
               <span style={{width:6,height:6,borderRadius:"50%",background:sC,display:"inline-block"}}/>
-              {sync==="ok"?"✓ Sync":sync==="cache"?"📦 Offline":sync==="err"?"❌ Fehler":"⏳"}
-              {lsGet("hm_key")?" · 🤖":""}
+              {sync==="ok"?"Sync ✓":sync==="err"?"❌ Fehler":"⏳"}
             </span>
             <button onClick={()=>{lsDel("hm_fb");setAktiv(false);setGeladen(false);}}
-              style={{fontSize:18,background:"rgba(255,255,255,0.1)",border:"none",color:"rgba(255,255,255,0.7)",padding:"2px 6px",borderRadius:5,cursor:"pointer"}}>
+              style={{fontSize:21,background:"rgba(255,255,255,0.1)",border:"none",color:"rgba(255,255,255,0.7)",padding:"2px 6px",borderRadius:5,cursor:"pointer"}}>
               ⚙️ Einstellungen
             </button>
           </div>
         </div>
-        <div style={{display:"flex",gap:12,marginTop:7,fontSize:14,opacity:0.85}}>
+        <div style={{display:"flex",gap:12,marginTop:7,fontSize:19,opacity:0.85}}>
           <span>📦 {gB}</span><span>🛒 {oE} offen</span><span>✅ {oT} Aufgaben</span>
         </div>
       </div>
 
-      <div style={{padding:12,flex:"1 1 auto",overflowY:"auto"}}>
+      <div style={{padding:12}}>
         {tab==="bestand"    && <BestandTab bestand={bestand} onAdd={addBestand} onRemove={remBestand}/>}
-        {tab==="einkauf"    && <EinkaufTab einkauf={einkauf} onAdd={addEinkauf} onToggle={togEinkauf} onRemove={remEinkauf} onShop={shopEinkauf} onClear={clearEinkauf} onUpdate={updateEinkauf} onEinlagern={einlagern} bestand={bestand}/>}
+        {tab==="einkauf"    && <EinkaufTab einkauf={einkauf} onAdd={addEinkauf} onToggle={togEinkauf} onRemove={remEinkauf} onShop={shopEinkauf} onClear={clearEinkauf}/>}
         {tab==="uebersicht" && <UebersichtTab bestand={bestand} einkauf={einkauf} kassenbons={kassenbons} todos={todos}/>}
         {tab==="kassenbon"  && <KassenbonTab kassenbons={kassenbons} setKassenbons={setKFn} onAddEinkauf={addEinkauf}/>}
-        {tab==="suche"      && <SucheTab bestand={bestand}/>}
         {tab==="aufgaben"   && <AufgabenTab todos={todos} onAdd={addTodo} onToggle={togTodo} onRemove={remTodo}/>}
       </div>
 
-      <nav style={{position:"sticky",bottom:0,left:0,width:"100%",background:"white",borderTop:"1px solid #e5e7eb",display:"flex",boxShadow:"0 -2px 10px rgba(0,0,0,0.08)",zIndex:100,marginTop:"auto"}}>
+      <nav style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:500,background:"white",borderTop:"1px solid #e5e7eb",display:"flex",boxShadow:"0 -2px 10px rgba(0,0,0,0.08)",zIndex:100}}>
         {TABS.map(t=>{
           const badge = t.id==="einkauf"?oE : t.id==="aufgaben"?oT : 0;
           const a = tab===t.id;
           return (
             <button key={t.id} onClick={()=>setTab(t.id)}
               style={{flex:1,padding:"10px 2px 8px",border:"none",background:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:1,position:"relative"}}>
-              <span style={{fontSize:16}}>{t.i}</span>
-              <span style={{fontSize:18,fontWeight:a?700:400,color:a?"#3d5c3f":"#9ca3af"}}>{t.l}</span>
-              {badge>0&&<span style={{position:"absolute",top:5,right:"calc(50% - 15px)",background:"#dc2626",color:"white",fontSize:18,fontWeight:700,borderRadius:"50%",width:15,height:15,display:"flex",alignItems:"center",justifyContent:"center"}}>{badge>9?"9+":badge}</span>}
+              <span style={{fontSize:18}}>{t.i}</span>
+              <span style={{fontSize:21,fontWeight:a?700:400,color:a?"#3d5c3f":"#9ca3af"}}>{t.l}</span>
+              {badge>0&&<span style={{position:"absolute",top:5,right:"calc(50% - 15px)",background:"#dc2626",color:"white",fontSize:21,fontWeight:700,borderRadius:"50%",width:15,height:15,display:"flex",alignItems:"center",justifyContent:"center"}}>{badge>9?"9+":badge}</span>}
               {a&&<div style={{position:"absolute",bottom:0,left:"15%",right:"15%",height:2,background:"#3d5c3f",borderRadius:2}}/>}
             </button>
           );
@@ -1393,15 +805,7 @@ const App = () => {
   );
 };
 
-class ErrorBoundary extends React.Component {
-  constructor(props) { super(props); this.state = {error: null}; }
-  componentDidCatch(error, info) { this.setState({error: error.toString() + "\n" + info.componentStack}); }
-  render() {
-    if(this.state.error) return React.createElement('div', {style:{padding:20,fontFamily:'monospace',fontSize:14,color:'red',whiteSpace:'pre-wrap'}}, "FEHLER:\n" + this.state.error);
-    return this.props.children;
-  }
-}
-ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(ErrorBoundary, null, React.createElement(App)));
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 </script>
 </body>
 </html>
