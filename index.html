@@ -198,7 +198,7 @@ const Einrichtung = ({onStart}) => {
     onStart();
   };
   return (
-    <div style={{maxWidth:500,margin:"0 auto",minHeight:"100vh",background:"#f5f5f0"}}>
+    <div style={{width:"100%",minHeight:"100vh",background:"#f5f5f0"}}>
       <div style={{background:"linear-gradient(135deg,#2c3e2d,#3d5c3f)",padding:"20px",color:"white"}}>
         <h1 style={{margin:0,fontSize:26,fontWeight:800}}>🏠 Haushalt Manager</h1>
         <p style={{margin:"4px 0 0",fontSize:21,opacity:0.8}}>Einrichtung</p>
@@ -470,7 +470,7 @@ const EinkaufItem = ({item, onToggle, onRemove, onShop, onUpdate, onEinlagern, b
         </select>
       </div>
       <div style={{display:"flex",gap:6}}>
-        <button onClick={()=>{onUpdate&&onUpdate(item.id,{name:val.name??item.name,qty:parseFloat(val.qty??item.qty)||1,unit:val.unit??item.unit});setModus(null);}}
+        <button onClick={()=>{onUpdate?.(item.id,{name:val.name??item.name,qty:parseFloat(val.qty??item.qty)||1,unit:val.unit??item.unit});setModus(null);}}
           style={{flex:1,padding:"10px",background:"#f59e0b",color:"white",border:"none",borderRadius:8,cursor:"pointer",fontWeight:800,fontSize:17}}>✓</button>
         <button onClick={()=>setModus(null)} style={{padding:"10px 16px",background:"#e5e7eb",color:"#374151",border:"none",borderRadius:8,cursor:"pointer",fontSize:17}}>✕</button>
       </div>
@@ -792,7 +792,6 @@ const AufgabenTab = ({todos, onAdd, onToggle, onRemove}) => {
           ))}
         </div>
       )}
-      {zuletzt && <div style={{background:"#3d5c3f",color:"white",borderRadius:10,padding:"8px 14px",fontSize:19,fontWeight:700,textAlign:"center",marginBottom:8}}>{zuletzt}</div>}
       <div style={{background:"white",borderRadius:14,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
         {!sorted.length
           ?<div style={{textAlign:"center",padding:"32px",color:"#9ca3af"}}><div style={{fontSize:36}}>✅</div><p style={{margin:"8px 0 0",fontSize:26,fontWeight:600}}>Keine Aufgaben</p></div>
@@ -872,7 +871,7 @@ const App = () => {
   if(!aktiv) return <Einrichtung onStart={()=>setAktiv(true)}/>;
 
   if(!geladen) return (
-    <div style={{maxWidth:500,margin:"0 auto",minHeight:"100vh",background:"#f5f5f0",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:12,color:"#6b7280"}}>
+    <div style={{width:"100%",minHeight:"100vh",background:"#f5f5f0",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:12,color:"#6b7280"}}>
       <span style={{fontSize:40,animation:"spin 1s linear infinite",display:"inline-block"}}>🔄</span>
       <p style={{margin:0,fontSize:26,fontWeight:600}}>Lade Daten…</p>
     </div>
@@ -885,7 +884,7 @@ const App = () => {
   const sC = sync==="ok"?"#4ade80":sync==="err"?"#f87171":"#fbbf24";
 
   return (
-    <div style={{fontFamily:"'Segoe UI',system-ui,sans-serif",maxWidth:500,margin:"0 auto",minHeight:"100vh",background:"#f5f5f0",paddingBottom:72}}>
+    <div style={{fontFamily:"'Segoe UI',system-ui,sans-serif",width:"100%",minHeight:"100vh",background:"#f5f5f0",paddingBottom:72}}>
       <div style={{background:"linear-gradient(135deg,#2c3e2d,#3d5c3f)",padding:"14px 18px 10px",color:"white"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
           <h1 style={{margin:0,fontSize:19,fontWeight:800}}>🏠 Haushalt Manager</h1>
@@ -913,7 +912,7 @@ const App = () => {
         {tab==="aufgaben"   && <AufgabenTab todos={todos} onAdd={addTodo} onToggle={togTodo} onRemove={remTodo}/>}
       </div>
 
-      <nav style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:500,background:"white",borderTop:"1px solid #e5e7eb",display:"flex",boxShadow:"0 -2px 10px rgba(0,0,0,0.08)",zIndex:100}}>
+      <nav style={{position:"fixed",bottom:0,left:"50%",width:"100%",background:"white",borderTop:"1px solid #e5e7eb",display:"flex",boxShadow:"0 -2px 10px rgba(0,0,0,0.08)",zIndex:100}}>
         {TABS.map(t=>{
           const badge = t.id==="einkauf"?oE : t.id==="aufgaben"?oT : 0;
           const a = tab===t.id;
