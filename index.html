@@ -251,7 +251,7 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
     try {
       let parsed;
       try {
-        parsed = await claudeCall([{role:"user",content:txt}], 'Extrahiere ALLE Lebensmittel. NUR JSON-Array:[{"name":"X","qty":1,"unit":"Stück"}]');
+        parsed = await claudeCall([{role:"user",content:txt}], `Extrahiere ALLE Lebensmittel. NUR JSON-Array:[{"name":"X","qty":1,"unit":"Stück"}]`);
       } catch { parsed = parseText(txt); }
       if(parsed && parsed.length) {
         onAdd(oId, parsed.map(x=>({...x, fach: gewSch != null ? Number(gewSch) : null})));
@@ -302,15 +302,15 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
           <div style={{display:"flex",alignItems:"center",gap:5,flexWrap:"wrap",marginBottom:6}}>
             <span style={{fontSize:26,fontWeight:700,color:"#9ca3af"}}>ANZEIGEN:</span>
             <SchBtn label="Alle" aktiv={filtSch===null} onClick={()=>setFiltSch(null)} n={alleItems.length}/>
-            {Array.from({length:ort.sch},(_,i)=>i+1).map(s=>(
-              <SchBtn key={s} label={`Schublade ${s}`} aktiv={filtSch===s} onClick={()=>setFiltSch(s)} n={alleItems.filter(i=>i.sch===s).length}/>
+            {(ort.faecher||[]).map(s=>(
+              <SchBtn key={s} label={`Nr.${s}`} aktiv={filtSch===Number(s)} onClick={()=>setFiltSch(Number(s))} n={alleItems.filter(i=>Number(i.fach)===Number(s)).length}/>
             ))}
           </div>
           <div style={{display:"flex",alignItems:"center",gap:5,flexWrap:"wrap"}}>
             <span style={{fontSize:26,fontWeight:700,color:"#9ca3af"}}>NEUER ARTIKEL → SCH.:</span>
             <SchBtn label="–" aktiv={neuSch===null} onClick={()=>setNeuSch(null)} n={0}/>
-            {Array.from({length:ort.sch},(_,i)=>i+1).map(s=>(
-              <SchBtn key={s} label={`${s}`} aktiv={neuSch===s} onClick={()=>setNeuSch(Number(s))} n={0}/>
+            {(ort.faecher||[]).map(s=>(
+              <SchBtn key={s} label={`${s}`} aktiv={neuSch===Number(s)} onClick={()=>setNeuSch(Number(s))} n={0}/>
             ))}
           </div>
         </div>
