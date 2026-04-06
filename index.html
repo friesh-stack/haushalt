@@ -9,8 +9,8 @@
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Segoe UI',system-ui,sans-serif;background:#f5f5f0;}
-input,button,select{font-family:inherit;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#f5f5f0;font-size:18px;}
+input,button,select{font-family:inherit;font-size:18px;}
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 </style>
 </head>
@@ -170,7 +170,7 @@ const EingabeFeld = ({ph, onOK, onBild, busy}) => {
             onChange={async e=>{const f=e.target.files[0];if(f){await onBild(f);}e.target.value="";}}/>
         </>}
       </div>
-      {busy && <div style={{textAlign:"center",color:"#6b7280",fontSize:24,marginTop:8,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+      {busy && <div style={{textAlign:"center",color:"#6b7280",fontSize:26,marginTop:8,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
         <span style={{display:"inline-block",animation:"spin 1s linear infinite"}}>⏳</span> Verarbeite…
       </div>}
     </div>
@@ -181,7 +181,7 @@ const SchBtn = ({label, aktiv, onClick, n}) => (
   <button onClick={onClick} style={{
     padding:"3px 8px", borderRadius:20, border:"1.5px solid",
     borderColor:aktiv?"#3d5c3f":"#e5e7eb", background:aktiv?"#3d5c3f":"white",
-    color:aktiv?"white":"#374151", fontSize:19, cursor:"pointer", fontWeight:aktiv?700:400
+    color:aktiv?"white":"#374151", fontSize:23, cursor:"pointer", fontWeight:aktiv?700:400
   }}>{label}{n>0?` (${n})`:""}</button>
 );
 
@@ -190,40 +190,42 @@ const Einrichtung = ({onStart}) => {
   const [fb, setFb] = useState(lsGet("hm_fb"));
   const [key, setKey] = useState(lsGet("hm_key"));
   const [err, setErr] = useState("");
+  const [kalSync, setKalSync] = useState(lsGet("hm_kal")==="1");
   const start = () => {
     const u = fb.trim().replace(/\/$/,"");
     if (!u.includes("firebaseio.com")) { setErr("Ungültige Firebase-URL – muss firebaseio.com enthalten"); return; }
     lsSet("hm_fb", u);
     if (key.trim()) lsSet("hm_key", key.trim());
+    lsSet("hm_kal", kalSync ? "1" : "0");
     onStart();
   };
   return (
     <div style={{width:"100%",minHeight:"100vh",background:"#f5f5f0"}}>
       <div style={{background:"linear-gradient(135deg,#2c3e2d,#3d5c3f)",padding:"20px",color:"white"}}>
         <h1 style={{margin:0,fontSize:26,fontWeight:800}}>🏠 Haushalt Manager</h1>
-        <p style={{margin:"4px 0 0",fontSize:21,opacity:0.8}}>Einrichtung</p>
+        <p style={{margin:"4px 0 0",fontSize:26,opacity:0.8}}>Einrichtung</p>
       </div>
       <div style={{padding:16}}>
         <div style={{background:"white",borderRadius:14,padding:16,marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
-          <p style={{fontWeight:800,fontSize:19,marginBottom:6}}>🔗 Firebase-URL</p>
+          <p style={{fontWeight:800,fontSize:23,marginBottom:6}}>🔗 Firebase-URL</p>
           <input value={fb} onChange={e=>setFb(e.target.value)}
             placeholder="https://einkauf-haushalt-default-rtdb.firebaseio.com"
-            style={{width:"100%",padding:"11px 12px",borderRadius:10,border:`1.5px solid ${err?"#dc2626":"#e5e7eb"}`,fontSize:21,outline:"none",background:"#fafafa"}}/>
-          {err && <p style={{color:"#dc2626",fontSize:24,marginTop:5}}>⚠️ {err}</p>}
+            style={{width:"100%",padding:"11px 12px",borderRadius:10,border:`1.5px solid ${err?"#dc2626":"#e5e7eb"}`,fontSize:26,outline:"none",background:"#fafafa"}}/>
+          {err && <p style={{color:"#dc2626",fontSize:26,marginTop:5}}>⚠️ {err}</p>}
         </div>
         <div style={{background:"white",borderRadius:14,padding:16,marginBottom:16,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
-          <p style={{fontWeight:800,fontSize:19,marginBottom:2}}>🤖 Anthropic API-Key <span style={{fontSize:19,color:"#9ca3af",fontWeight:400}}>(optional)</span></p>
-          <p style={{fontSize:24,color:"#6b7280",marginBottom:8}}>Nur für Foto-Scan & Kassenbons. Texteingabe funktioniert ohne Key.</p>
+          <p style={{fontWeight:800,fontSize:23,marginBottom:2}}>🤖 Anthropic API-Key <span style={{fontSize:23,color:"#9ca3af",fontWeight:400}}>(optional)</span></p>
+          <p style={{fontSize:26,color:"#6b7280",marginBottom:8}}>Nur für Foto-Scan & Kassenbons. Texteingabe funktioniert ohne Key.</p>
           <input value={key} onChange={e=>setKey(e.target.value)} type="password"
             placeholder="sk-ant-api03-…"
-            style={{width:"100%",padding:"11px 12px",borderRadius:10,border:"1.5px solid #e5e7eb",fontSize:21,outline:"none",background:"#fafafa"}}/>
+            style={{width:"100%",padding:"11px 12px",borderRadius:10,border:"1.5px solid #e5e7eb",fontSize:26,outline:"none",background:"#fafafa"}}/>
         </div>
         <button onClick={start} disabled={!fb.trim()} style={{
-          width:"100%", padding:"14px", fontSize:24, fontWeight:800,
+          width:"100%", padding:"14px", fontSize:26, fontWeight:800,
           background:!fb.trim()?"#e5e7eb":"#3d5c3f", color:!fb.trim()?"#9ca3af":"white",
           border:"none", borderRadius:12, cursor:!fb.trim()?"default":"pointer"
         }}>✅ Starten</button>
-        <div style={{background:"#fef9c3",borderRadius:12,padding:12,fontSize:24,color:"#92400e",lineHeight:1.6,marginTop:12}}>
+        <div style={{background:"#fef9c3",borderRadius:12,padding:12,fontSize:26,color:"#92400e",lineHeight:1.6,marginTop:12}}>
           💡 Beide Smartphones: Diese Seite öffnen → Firebase-URL eingeben → <strong>Zum Homescreen hinzufügen</strong>
         </div>
       </div>
@@ -272,7 +274,7 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
             style={{flex:1,padding:"8px 2px",borderRadius:10,border:"2px solid",
               borderColor:bId===b.id?"#3d5c3f":"#e5e7eb",
               background:bId===b.id?"#3d5c3f":"white",
-              color:bId===b.id?"white":"#374151",fontSize:19,cursor:"pointer",fontWeight:700,lineHeight:1.3}}>
+              color:bId===b.id?"white":"#374151",fontSize:23,cursor:"pointer",fontWeight:700,lineHeight:1.3}}>
             {b.icon}<br/>{b.name}
           </button>
         ))}
@@ -287,7 +289,7 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
               style={{padding:"5px 10px",borderRadius:20,border:"2px solid",
                 borderColor:oId===o.id?"#3d5c3f":"#e5e7eb",
                 background:oId===o.id?"#f0f4f1":"white",
-                color:"#374151",fontSize:24,cursor:"pointer",fontWeight:oId===o.id?700:400,
+                color:"#374151",fontSize:26,cursor:"pointer",fontWeight:oId===o.id?700:400,
                 display:"flex",alignItems:"center",gap:4}}>
               {o.icon} {o.name}
               {cnt > 0 && <span style={{background:"#3d5c3f",color:"white",borderRadius:10,padding:"0 5px",fontSize:10}}>{cnt}</span>}
@@ -319,11 +321,11 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
       <EingabeFeld ph={`Artikel für ${ort?.name||""}… (Komma trennt mehrere)`} onOK={txt => hinzufuegen(txt, neuSch)} busy={busy}/>
 
       {/* Artikelliste */}
-      {zuletzt && <div style={{background:"#3d5c3f",color:"white",borderRadius:10,padding:"8px 14px",fontSize:19,fontWeight:700,textAlign:"center",marginBottom:8}}>{zuletzt}</div>}
+      {zuletzt && <div style={{background:"#3d5c3f",color:"white",borderRadius:10,padding:"8px 14px",fontSize:23,fontWeight:700,textAlign:"center",marginBottom:8}}>{zuletzt}</div>}
       <div style={{background:"white",borderRadius:14,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
         <div style={{padding:"10px 14px",background:"#f0f4f1",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <span style={{fontWeight:700,fontSize:13}}>{ort?.icon} {ort?.name} <span style={{fontSize:26,color:"#9ca3af"}}>({ort?.info})</span>{filtSch?` · Schublade ${filtSch}`:""}</span>
-          <span style={{fontSize:19,color:"#6b7280"}}>{items.length} Artikel</span>
+          <span style={{fontSize:23,color:"#6b7280"}}>{items.length} Artikel</span>
         </div>
         {items.length===0
           ? <div style={{textAlign:"center",padding:"24px",color:"#9ca3af"}}><div style={{fontSize:28}}>{ort?.icon}</div><p style={{margin:"6px 0 0",fontSize:12}}>Leer – Artikel eingeben!</p></div>
@@ -331,10 +333,10 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
             <div key={item.id} style={{display:"flex",alignItems:"center",padding:"9px 14px",borderBottom:i<items.length-1?"1px solid #f3f4f6":"none",gap:8}}>
               <div style={{flex:1}}>
                 <span style={{fontSize:26,fontWeight:600}}>{item.name}</span>
-                <span style={{fontSize:24,color:"#6b7280",marginLeft:6}}>{item.qty} {item.unit}</span>
+                <span style={{fontSize:26,color:"#6b7280",marginLeft:6}}>{item.qty} {item.unit}</span>
                 {item.sch && <span style={{fontSize:26,color:"#9ca3af",marginLeft:5,background:"#f3f4f6",padding:"1px 5px",borderRadius:6}}>Sch.{item.sch}</span>}
               </div>
-              <span style={{fontSize:21,color:"#d1d5db"}}>{item.datum}</span>
+              <span style={{fontSize:26,color:"#d1d5db"}}>{item.datum}</span>
               <button onClick={()=>onRemove(oId,item.id)} style={{background:"#fee2e2",border:"none",cursor:"pointer",color:"#dc2626",width:26,height:26,borderRadius:7,fontWeight:700,fontSize:26,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
             </div>
           ))
@@ -351,8 +353,8 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
               style={{background:"white",borderRadius:12,padding:"9px 11px",border:"1.5px solid",
                 borderColor:oId===o.id?"#3d5c3f":"#f3f4f6",cursor:"pointer",textAlign:"left"}}>
               <div style={{fontSize:16}}>{o.icon}</div>
-              <div style={{fontSize:19,fontWeight:600,color:"#374151",marginTop:2,lineHeight:1.2}}>{o.name}</div>
-              <div style={{fontSize:21,color:"#9ca3af"}}>{o.bName} · {o.info}</div>
+              <div style={{fontSize:23,fontWeight:600,color:"#374151",marginTop:2,lineHeight:1.2}}>{o.name}</div>
+              <div style={{fontSize:26,color:"#9ca3af"}}>{o.bName} · {o.info}</div>
               <div style={{fontSize:26,fontWeight:700,color:cnt?"#3d5c3f":"#d1d5db",marginTop:2}}>{cnt?`${cnt} Artikel`:"leer"}</div>
             </button>
           );
@@ -395,16 +397,16 @@ const EinkaufItem = ({item, onToggle, onRemove, onShop, onUpdate, onEinlagern, b
 
   if(modus==="einlagern") return (
     <div style={{background:"#f0f9f0",borderBottom:last?"none":"1px solid #e5e7eb",padding:"12px 14px"}}>
-      <div style={{fontWeight:800,fontSize:19,marginBottom:6,color:"#2c3e2d"}}>
+      <div style={{fontWeight:800,fontSize:23,marginBottom:6,color:"#2c3e2d"}}>
         📦 {item.name} einlagern
       </div>
-      {aehnlich.length>0 && <div style={{background:"#d4f0d4",borderRadius:8,padding:"5px 10px",fontSize:15,color:"#2c5f2e",marginBottom:8,fontWeight:600}}>
+      {aehnlich.length>0 && <div style={{background:"#d4f0d4",borderRadius:8,padding:"5px 10px",fontSize:23,color:"#2c5f2e",marginBottom:8,fontWeight:600}}>
         💡 Ähnlich: {[...new Set(aehnlich.map(a=>a.ort.name))].slice(0,2).join(", ")}
       </div>}
       <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:8}}>
         {BEREICHE.map(b=>(
           <button key={b.id} onClick={()=>{setGewOrt(b.orte[0].id);setGewSch(null);}}
-            style={{padding:"6px 10px",borderRadius:8,border:"2px solid",fontSize:15,cursor:"pointer",fontWeight:700,
+            style={{padding:"6px 10px",borderRadius:8,border:"2px solid",fontSize:23,cursor:"pointer",fontWeight:700,
               borderColor:aktBereich?.id===b.id?"#3d5c3f":"#e5e7eb",
               background:aktBereich?.id===b.id?"#3d5c3f":"white",
               color:aktBereich?.id===b.id?"white":"#374151"}}>
@@ -415,7 +417,7 @@ const EinkaufItem = ({item, onToggle, onRemove, onShop, onUpdate, onEinlagern, b
       <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:8}}>
         {aktBereich?.orte.map(o=>(
           <button key={o.id} onClick={()=>{setGewOrt(o.id);setGewSch(null);}}
-            style={{padding:"4px 9px",borderRadius:20,border:"2px solid",fontSize:14,cursor:"pointer",
+            style={{padding:"4px 9px",borderRadius:20,border:"2px solid",fontSize:22,cursor:"pointer",
               borderColor:gewOrt===o.id?"#3d5c3f":"#e5e7eb",
               background:gewOrt===o.id?"#f0f4f1":"white",
               color:"#374151",fontWeight:gewOrt===o.id?700:400,
@@ -427,14 +429,14 @@ const EinkaufItem = ({item, onToggle, onRemove, onShop, onUpdate, onEinlagern, b
       </div>
       {(aktOrtObj?.faecher||[]).length>0 && (
         <div style={{marginBottom:8}}>
-          <div style={{fontSize:13,color:"#9ca3af",marginBottom:4,fontWeight:700}}>SCHUBLADE:</div>
+          <div style={{fontSize:26,color:"#9ca3af",marginBottom:4,fontWeight:700}}>SCHUBLADE:</div>
           <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
             <SchBtn label="–" aktiv={gewSch===null} onClick={()=>setGewSch(null)} n={0}/>
             {(aktOrtObj.faecher||[]).map(s=>(
               <SchBtn key={s} label={`${s}`} aktiv={gewSch===s} onClick={()=>setGewSch(Number(s))} n={0}/>
             ))}
           </div>
-          {gewSch&&<span style={{fontSize:14,color:"white",background:"#e53e3e",padding:"3px 10px",borderRadius:6,fontWeight:800,marginTop:4,display:"inline-block"}}>✓ Schublade {gewSch}</span>}
+          {gewSch&&<span style={{fontSize:22,color:"white",background:"#e53e3e",padding:"3px 10px",borderRadius:6,fontWeight:800,marginTop:4,display:"inline-block"}}>✓ Schublade {gewSch}</span>}
         </div>
       )}
       <div style={{display:"flex",gap:6}}>
@@ -452,20 +454,20 @@ const EinkaufItem = ({item, onToggle, onRemove, onShop, onUpdate, onEinlagern, b
     <div style={{padding:"10px 12px",background:"#fff9e6",borderBottom:last?"none":"1px solid #e5e7eb"}}>
       <div style={{display:"flex",gap:6,marginBottom:6}}>
         <input value={val.name??item.name} onChange={e=>setVal(p=>({...p,name:e.target.value}))} autoFocus
-          style={{flex:1,padding:"8px 10px",borderRadius:8,border:"2px solid #f59e0b",fontSize:18,outline:"none"}}/>
+          style={{flex:1,padding:"8px 10px",borderRadius:8,border:"2px solid #f59e0b",fontSize:22,outline:"none"}}/>
       </div>
       <div style={{display:"flex",gap:6,marginBottom:6}}>
         <input type="number" value={val.qty??item.qty}
           onChange={e=>setVal(p=>({...p,qty:e.target.value}))}
           onFocus={e=>e.target.select()}
           onBlur={e=>setVal(p=>({...p,qty:parseFloat(e.target.value)||1}))}
-          style={{width:70,padding:"8px",borderRadius:8,border:"1.5px solid #e5e7eb",fontSize:17,outline:"none"}}/>
+          style={{width:70,padding:"8px",borderRadius:8,border:"1.5px solid #e5e7eb",fontSize:26,outline:"none"}}/>
         <select value={val.unit??item.unit} onChange={e=>setVal(p=>({...p,unit:e.target.value}))}
-          style={{flex:1,padding:"8px",borderRadius:8,border:"1.5px solid #e5e7eb",fontSize:16,outline:"none"}}>
+          style={{flex:1,padding:"8px",borderRadius:8,border:"1.5px solid #e5e7eb",fontSize:20,outline:"none"}}>
           {["Stück","kg","g","L","ml","Packung","Flasche","Dose","Glas","Beutel","Kasten"].map(u=><option key={u}>{u}</option>)}
         </select>
         <select value={item.shop||""} onChange={e=>onShop(item.id,e.target.value)}
-          style={{flex:1,padding:"8px",borderRadius:8,border:"1.5px solid #e5e7eb",fontSize:15,outline:"none"}}>
+          style={{flex:1,padding:"8px",borderRadius:8,border:"1.5px solid #e5e7eb",fontSize:23,outline:"none"}}>
           {ALLE_SHOPS.map(s=><option key={s} value={s}>{s}</option>)}
         </select>
       </div>
@@ -481,14 +483,14 @@ const EinkaufItem = ({item, onToggle, onRemove, onShop, onUpdate, onEinlagern, b
     <div style={{display:"flex",alignItems:"center",padding:"11px 12px",borderBottom:last?"none":"1px solid #f3f4f6",opacity:item.erledigt?0.4:1,gap:8}}>
       <input type="checkbox" checked={item.erledigt} onChange={()=>onToggle(item.id)} style={{width:22,height:22,cursor:"pointer",accentColor:"#3d5c3f",flexShrink:0}}/>
       <div style={{flex:1,cursor:item.erledigt?"default":"pointer",textDecoration:item.erledigt?"line-through":"none"}} onClick={oeffneEinlagern}>
-        <span style={{fontSize:19,fontWeight:700}}>{item.name}</span>
-        <span style={{fontSize:16,color:"#6b7280",marginLeft:6}}>{item.qty} {item.unit}</span>
-        {!item.erledigt && <span style={{fontSize:13,color:"#3d5c3f",marginLeft:5}}>→ einlagern</span>}
+        <span style={{fontSize:23,fontWeight:700}}>{item.name}</span>
+        <span style={{fontSize:20,color:"#6b7280",marginLeft:6}}>{item.qty} {item.unit}</span>
+        {!item.erledigt && <span style={{fontSize:26,color:"#3d5c3f",marginLeft:5}}>→ einlagern</span>}
       </div>
-      <select value={item.shop||""} onChange={e=>onShop(item.id,e.target.value)} style={{fontSize:13,border:"1px solid #e5e7eb",borderRadius:6,padding:"3px",maxWidth:70,flexShrink:0}}>
+      <select value={item.shop||""} onChange={e=>onShop(item.id,e.target.value)} style={{fontSize:26,border:"1px solid #e5e7eb",borderRadius:6,padding:"3px",maxWidth:70,flexShrink:0}}>
         {ALLE_SHOPS.map(s=><option key={s} value={s}>{s}</option>)}
       </select>
-      <button onClick={()=>onRemove(item.id)} style={{background:"#fee2e2",border:"none",cursor:"pointer",color:"#dc2626",width:30,height:30,borderRadius:6,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,flexShrink:0}}>×</button>
+      <button onClick={()=>onRemove(item.id)} style={{background:"#fee2e2",border:"none",cursor:"pointer",color:"#dc2626",width:30,height:30,borderRadius:6,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,flexShrink:0}}>×</button>
     </div>
   );
 };
@@ -559,7 +561,7 @@ const EinkaufTab = ({einkauf, onAdd, onToggle, onRemove, onShop, onClear, onUpda
               style={{padding:"5px 9px",borderRadius:20,border:"2px solid",
                 borderColor:gId===g.id?"#3d5c3f":"#e5e7eb",
                 background:gId===g.id?"#3d5c3f":"white",
-                color:gId===g.id?"white":"#374151",fontSize:24,cursor:"pointer",fontWeight:700}}>
+                color:gId===g.id?"white":"#374151",fontSize:26,cursor:"pointer",fontWeight:700}}>
               {g.icon} {g.name}
             </button>
           ))}
@@ -573,7 +575,7 @@ const EinkaufTab = ({einkauf, onAdd, onToggle, onRemove, onShop, onClear, onUpda
                 <button key={s} onClick={()=>setShop(s)}
                   style={{padding:"5px 10px",borderRadius:20,border:"2px solid",
                     borderColor:a?f.bg:"#e5e7eb",background:a?f.bg:"white",
-                    color:a?f.fg:"#374151",fontSize:24,cursor:"pointer",fontWeight:700}}>
+                    color:a?f.fg:"#374151",fontSize:26,cursor:"pointer",fontWeight:700}}>
                   {s}
                 </button>
               );
@@ -587,8 +589,8 @@ const EinkaufTab = ({einkauf, onAdd, onToggle, onRemove, onShop, onClear, onUpda
       {einkauf.length > 0 && (
         <div style={{background:"white",borderRadius:14,padding:12,marginBottom:10,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
-            <span style={{fontSize:21,fontWeight:600}}>{done}/{einkauf.length} erledigt</span>
-            {done>0 && <button onClick={onClear} style={{background:"#fee2e2",border:"none",color:"#dc2626",cursor:"pointer",fontSize:19,padding:"3px 8px",borderRadius:6,fontWeight:600}}>Erledigte löschen</button>}
+            <span style={{fontSize:26,fontWeight:600}}>{done}/{einkauf.length} erledigt</span>
+            {done>0 && <button onClick={onClear} style={{background:"#fee2e2",border:"none",color:"#dc2626",cursor:"pointer",fontSize:23,padding:"3px 8px",borderRadius:6,fontWeight:600}}>Erledigte löschen</button>}
           </div>
           <div style={{height:5,background:"#f3f4f6",borderRadius:3,overflow:"hidden"}}>
             <div style={{height:"100%",width:`${einkauf.length?(done/einkauf.length)*100:0}%`,background:"linear-gradient(90deg,#3d5c3f,#4a7a4d)",borderRadius:3,transition:"width 0.3s"}}/>
@@ -601,7 +603,7 @@ const EinkaufTab = ({einkauf, onAdd, onToggle, onRemove, onShop, onClear, onUpda
         <div style={{display:"flex",gap:5,marginBottom:10,flexWrap:"wrap"}}>
           {["Alle",...belegt.map(g=>g.id)].map(f => {
             const g = GRUPPEN.find(x=>x.id===f);
-            return <button key={f} onClick={()=>setFilter(f)} style={{padding:"4px 8px",borderRadius:20,border:"2px solid",borderColor:filter===f?"#3d5c3f":"#e5e7eb",background:filter===f?"#3d5c3f":"white",color:filter===f?"white":"#374151",fontSize:19,cursor:"pointer",fontWeight:600}}>{g?`${g.icon} ${g.name}`:"Alle"}</button>;
+            return <button key={f} onClick={()=>setFilter(f)} style={{padding:"4px 8px",borderRadius:20,border:"2px solid",borderColor:filter===f?"#3d5c3f":"#e5e7eb",background:filter===f?"#3d5c3f":"white",color:filter===f?"white":"#374151",fontSize:23,cursor:"pointer",fontWeight:600}}>{g?`${g.icon} ${g.name}`:"Alle"}</button>;
           })}
         </div>
       )}
@@ -615,7 +617,7 @@ const EinkaufTab = ({einkauf, onAdd, onToggle, onRemove, onShop, onClear, onUpda
             <div key={`${gk}-${sn}`} style={{background:"white",borderRadius:14,marginBottom:10,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
               <div style={{padding:"9px 14px",background:f.bg,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                 <span style={{color:f.fg,fontWeight:800,fontSize:13}}>{g?.icon} {sn}</span>
-                <span style={{color:f.fg,fontSize:19,background:"rgba(0,0,0,0.18)",padding:"2px 7px",borderRadius:10}}>{d}/{items.length}</span>
+                <span style={{color:f.fg,fontSize:23,background:"rgba(0,0,0,0.18)",padding:"2px 7px",borderRadius:10}}>{d}/{items.length}</span>
               </div>
               {items.map((item,i) => (
                 <EinkaufItem key={item.id} item={item} onToggle={onToggle} onRemove={onRemove} onShop={onShop} onUpdate={onUpdate} onEinlagern={onEinlagern} bestand={bestand||{}} last={i===items.length-1}/>
@@ -648,7 +650,7 @@ const UebersichtTab = ({bestand, einkauf, kassenbons, todos}) => {
           <div key={i} style={{background:"white",borderRadius:14,padding:14,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
             <div style={{fontSize:20}}>{k.i}</div>
             <div style={{fontSize:26,fontWeight:800,color:k.c,marginTop:2}}>{k.v}</div>
-            <div style={{fontSize:19,color:"#6b7280",marginTop:2}}>{k.l}</div>
+            <div style={{fontSize:23,color:"#6b7280",marginTop:2}}>{k.l}</div>
           </div>
         ))}
       </div>
@@ -658,11 +660,11 @@ const UebersichtTab = ({bestand, einkauf, kassenbons, todos}) => {
           const tot = b.orte.reduce((s,o)=>s+(bestand[o.id]||[]).length,0);
           return (
             <div key={b.id} style={{marginBottom:10}}>
-              <div style={{display:"flex",justifyContent:"space-between",fontSize:21,fontWeight:700,padding:"3px 0",borderBottom:"1px solid #f3f4f6",marginBottom:3}}>
+              <div style={{display:"flex",justifyContent:"space-between",fontSize:26,fontWeight:700,padding:"3px 0",borderBottom:"1px solid #f3f4f6",marginBottom:3}}>
                 <span>{b.icon} {b.name}</span><span style={{color:"#3d5c3f"}}>{tot}</span>
               </div>
               {b.orte.map(o => {const c=(bestand[o.id]||[]).length;return(
-                <div key={o.id} style={{display:"flex",justifyContent:"space-between",padding:"2px 10px",fontSize:19,color:"#6b7280"}}>
+                <div key={o.id} style={{display:"flex",justifyContent:"space-between",padding:"2px 10px",fontSize:23,color:"#6b7280"}}>
                   <span>{o.icon} {o.name}</span>
                   <span style={{fontWeight:c?700:400,color:c?"#374151":"#d1d5db"}}>{c||"—"}</span>
                 </div>
@@ -689,7 +691,7 @@ const UebersichtTab = ({bestand, einkauf, kassenbons, todos}) => {
             </div>
           );
         })}
-        {!einkauf.length && <p style={{fontSize:24,color:"#9ca3af",margin:0}}>Keine Einkäufe</p>}
+        {!einkauf.length && <p style={{fontSize:26,color:"#9ca3af",margin:0}}>Keine Einkäufe</p>}
       </div>
     </div>
   );
@@ -716,13 +718,13 @@ const KassenbonTab = ({kassenbons, setKassenbons, onAddEinkauf}) => {
   return (
     <div>
       <div style={{background:"white",borderRadius:14,padding:16,marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
-        <h3 style={{margin:"0 0 10px",fontSize:19,fontWeight:800}}>🧾 Kassenbon einlesen</h3>
+        <h3 style={{margin:"0 0 10px",fontSize:23,fontWeight:800}}>🧾 Kassenbon einlesen</h3>
         <button onClick={()=>ref.current?.click()} disabled={busy}
           style={{width:"100%",padding:"14px",borderRadius:12,border:"2px dashed #3d5c3f",background:"#f0f4f1",fontSize:26,cursor:"pointer",fontWeight:600,color:"#2c3e2d"}}>
           {busy?"⏳ Wird gelesen…":"📷 Kassenbon hochladen / fotografieren"}
         </button>
         <input ref={ref} type="file" accept="image/*" style={{display:"none"}} onChange={scan}/>
-        <p style={{margin:"6px 0 0",fontSize:19,color:"#9ca3af",textAlign:"center"}}>Benötigt Anthropic API-Key</p>
+        <p style={{margin:"6px 0 0",fontSize:23,color:"#9ca3af",textAlign:"center"}}>Benötigt Anthropic API-Key</p>
       </div>
       {akt && (
         <div style={{background:"white",borderRadius:14,marginBottom:12,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
@@ -740,7 +742,7 @@ const KassenbonTab = ({kassenbons, setKassenbons, onAddEinkauf}) => {
           </div>
           <div style={{padding:"10px 14px",borderTop:"2px solid #f3f4f6"}}>
             <button onClick={()=>onAddEinkauf((akt.items||[]).map(i=>({name:i.name,qty:i.qty||1,unit:"Stück",shop:akt.store||"Kaufland"})))}
-              style={{width:"100%",padding:"10px",background:"#3d5c3f",color:"white",border:"none",borderRadius:10,cursor:"pointer",fontSize:21,fontWeight:700}}>
+              style={{width:"100%",padding:"10px",background:"#3d5c3f",color:"white",border:"none",borderRadius:10,cursor:"pointer",fontSize:26,fontWeight:700}}>
               → Zur Einkaufsliste
             </button>
           </div>
@@ -749,7 +751,7 @@ const KassenbonTab = ({kassenbons, setKassenbons, onAddEinkauf}) => {
       {kassenbons.slice(0,10).map(b=>(
         <button key={b.id} onClick={()=>setAkt(b)} style={{width:"100%",background:"white",borderRadius:12,padding:"10px 14px",marginBottom:8,border:"1.5px solid",borderColor:akt?.id===b.id?"#3d5c3f":"#f3f4f6",cursor:"pointer",textAlign:"left",boxShadow:"0 1px 4px rgba(0,0,0,0.05)"}}>
           <div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontWeight:700,fontSize:13}}>{b.store||"?"}</span><span style={{color:"#3d5c3f",fontWeight:800}}>{b.total}</span></div>
-          <div style={{fontSize:19,color:"#9ca3af"}}>{b.scanDatum} · {(b.items||[]).length} Artikel</div>
+          <div style={{fontSize:23,color:"#9ca3af"}}>{b.scanDatum} · {(b.items||[]).length} Artikel</div>
         </button>
       ))}
       {!kassenbons.length&&!busy&&<div style={{textAlign:"center",padding:"32px",color:"#9ca3af"}}><div style={{fontSize:36}}>🧾</div><p style={{margin:"8px 0 0",fontSize:26,fontWeight:600}}>Keine Kassenbons</p></div>}
@@ -764,6 +766,7 @@ const AufgabenTab = ({todos, onAdd, onToggle, onRemove}) => {
   const PRIOS = [{id:"hoch",l:"🔴 Hoch",c:"#dc2626"},{id:"mittel",l:"🟡 Mittel",c:"#f59e0b"},{id:"normal",l:"🟢 Normal",c:"#3d5c3f"}];
   const sorted = [...todos].sort((a,b)=>{const o={hoch:0,mittel:1,normal:2};if(a.erledigt!==b.erledigt)return a.erledigt?1:-1;return(o[a.prioritaet]||2)-(o[b.prioritaet]||2);});
   const add = () => {if(!txt.trim())return;onAdd(txt.trim(),prio);setTxt("");};
+  // Auto-save: save on Enter or blur
   return (
     <div>
       <div style={{background:"white",borderRadius:14,padding:14,marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
@@ -771,7 +774,7 @@ const AufgabenTab = ({todos, onAdd, onToggle, onRemove}) => {
         <div style={{display:"flex",gap:6,marginBottom:10}}>
           {PRIOS.map(p=>(
             <button key={p.id} onClick={()=>setPrio(p.id)}
-              style={{flex:1,padding:"7px 4px",borderRadius:10,border:"2px solid",borderColor:prio===p.id?p.c:"#e5e7eb",background:prio===p.id?p.c+"18":"white",color:prio===p.id?p.c:"#374151",fontSize:24,cursor:"pointer",fontWeight:700}}>
+              style={{flex:1,padding:"7px 4px",borderRadius:10,border:"2px solid",borderColor:prio===p.id?p.c:"#e5e7eb",background:prio===p.id?p.c+"18":"white",color:prio===p.id?p.c:"#374151",fontSize:26,cursor:"pointer",fontWeight:700}}>
               {p.l}
             </button>
           ))}
@@ -802,8 +805,8 @@ const AufgabenTab = ({todos, onAdd, onToggle, onRemove}) => {
                 <span style={{fontSize:26,fontWeight:600,textDecoration:t.erledigt?"line-through":"none"}}>{t.text}</span>
                 <div style={{fontSize:26,color:p.c,fontWeight:700,marginTop:1}}>{p.l}</div>
               </div>
-              <span style={{fontSize:21,color:"#d1d5db"}}>{t.datum}</span>
-              <button onClick={()=>onRemove(t.id)} style={{background:"#fee2e2",border:"none",cursor:"pointer",color:"#dc2626",width:24,height:24,borderRadius:6,fontWeight:700,fontSize:21,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
+              <span style={{fontSize:26,color:"#d1d5db"}}>{t.datum}</span>
+              <button onClick={()=>onRemove(t.id)} style={{background:"#fee2e2",border:"none",cursor:"pointer",color:"#dc2626",width:24,height:24,borderRadius:6,fontWeight:700,fontSize:26,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
             </div>
           );})}
       </div>
@@ -887,19 +890,19 @@ const App = () => {
     <div style={{fontFamily:"'Segoe UI',system-ui,sans-serif",width:"100%",minHeight:"100vh",background:"#f5f5f0",paddingBottom:72}}>
       <div style={{background:"linear-gradient(135deg,#2c3e2d,#3d5c3f)",padding:"14px 18px 10px",color:"white"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-          <h1 style={{margin:0,fontSize:19,fontWeight:800}}>🏠 Haushalt Manager</h1>
+          <h1 style={{margin:0,fontSize:23,fontWeight:800}}>🏠 Haushalt Manager</h1>
           <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:3}}>
             <span style={{fontSize:26,background:"rgba(255,255,255,0.15)",padding:"3px 7px",borderRadius:10,display:"flex",alignItems:"center",gap:3}}>
               <span style={{width:6,height:6,borderRadius:"50%",background:sC,display:"inline-block"}}/>
               {sync==="ok"?"Sync ✓":sync==="err"?"❌ Fehler":"⏳"}
             </span>
             <button onClick={()=>{lsDel("hm_fb");setAktiv(false);setGeladen(false);}}
-              style={{fontSize:21,background:"rgba(255,255,255,0.1)",border:"none",color:"rgba(255,255,255,0.7)",padding:"2px 6px",borderRadius:5,cursor:"pointer"}}>
+              style={{fontSize:26,background:"rgba(255,255,255,0.1)",border:"none",color:"rgba(255,255,255,0.7)",padding:"2px 6px",borderRadius:5,cursor:"pointer"}}>
               ⚙️ Einstellungen
             </button>
           </div>
         </div>
-        <div style={{display:"flex",gap:12,marginTop:7,fontSize:19,opacity:0.85}}>
+        <div style={{display:"flex",gap:12,marginTop:7,fontSize:23,opacity:0.85}}>
           <span>📦 {gB}</span><span>🛒 {oE} offen</span><span>✅ {oT} Aufgaben</span>
         </div>
       </div>
@@ -920,8 +923,8 @@ const App = () => {
             <button key={t.id} onClick={()=>setTab(t.id)}
               style={{flex:1,padding:"10px 2px 8px",border:"none",background:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:1,position:"relative"}}>
               <span style={{fontSize:18}}>{t.i}</span>
-              <span style={{fontSize:21,fontWeight:a?700:400,color:a?"#3d5c3f":"#9ca3af"}}>{t.l}</span>
-              {badge>0&&<span style={{position:"absolute",top:5,right:"calc(50% - 15px)",background:"#dc2626",color:"white",fontSize:21,fontWeight:700,borderRadius:"50%",width:15,height:15,display:"flex",alignItems:"center",justifyContent:"center"}}>{badge>9?"9+":badge}</span>}
+              <span style={{fontSize:26,fontWeight:a?700:400,color:a?"#3d5c3f":"#9ca3af"}}>{t.l}</span>
+              {badge>0&&<span style={{position:"absolute",top:5,right:"calc(50% - 15px)",background:"#dc2626",color:"white",fontSize:26,fontWeight:700,borderRadius:"50%",width:15,height:15,display:"flex",alignItems:"center",justifyContent:"center"}}>{badge>9?"9+":badge}</span>}
               {a&&<div style={{position:"absolute",bottom:0,left:"15%",right:"15%",height:2,background:"#3d5c3f",borderRadius:2}}/>}
             </button>
           );
@@ -936,7 +939,7 @@ class EB extends React.Component {
   constructor(p){super(p);this.state={e:null};}
   componentDidCatch(e){this.setState({e:e.message+"|"+e.stack?.slice(0,200)});}
   render(){
-    if(this.state.e) return <div style={{padding:20,color:"red",fontSize:16,whiteSpace:"pre-wrap",wordBreak:"break-all"}}>FEHLER: {this.state.e}</div>;
+    if(this.state.e) return <div style={{padding:20,color:"red",fontSize:20,whiteSpace:"pre-wrap",wordBreak:"break-all"}}>FEHLER: {this.state.e}</div>;
     return this.props.children;
   }
 }
