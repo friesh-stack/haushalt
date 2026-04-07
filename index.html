@@ -322,8 +322,8 @@ const BestandArtikel = ({item, oId, onRemove, onUpdate, hatSch, ort, last}) => {
 
 // ── BESTAND TAB ───────────────────────────────────────────
 const BestandTab = ({bestand, onAdd, onRemove}) => {
-  const [bId, setBId] = useState("vr");
-  const [oId, setOId] = useState("vr1");
+  const [bId, setBId] = useState("ku");
+  const [oId, setOId] = useState("ku1");
   const [filtSch, setFiltSch] = useState(null);
   const [neuSch, setNeuSch] = useState(null);
   const [zuletzt, setZuletzt] = useState("");
@@ -357,7 +357,7 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
     <div>
       {/* Bereiche */}
       <div style={{display:"flex",gap:6,marginBottom:12}}>
-        {BEREICHE.map(b => (
+        {BEREICHE.filter(b=>b.id!=="nf").map(b => (
           <button key={b.id} onClick={()=>{setBId(b.id);setOId(b.orte[0].id);setFiltSch(null);}}
             style={{flex:1,padding:"8px 2px",borderRadius:10,border:"2px solid",
               borderColor:bId===b.id?"#3d5c3f":"#e5e7eb",
@@ -424,7 +424,7 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
       </div>
 
       {sortAZ && (() => {
-        const alle = ALLE_ORTE.flatMap(o=>(bestand[o.id]||[]).map(i=>({...i,ort:o})));
+        const alle = ALLE_ORTE.filter(o=>o.bId!=="nf").flatMap(o=>(bestand[o.id]||[]).map(i=>({...i,ort:o})));
         const sortiert = [...alle].sort((a,b)=>a.name.localeCompare(b.name,"de"));
         if(!sortiert.length) return null;
         return (
@@ -451,7 +451,7 @@ const BestandTab = ({bestand, onAdd, onRemove}) => {
       {/* Alle Lagerorte Übersicht */}
       <p style={{fontSize:26,fontWeight:700,color:"#9ca3af",textTransform:"uppercase",margin:"14px 0 8px"}}>Alle Lagerorte</p>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7}}>
-        {ALLE_ORTE.map(o => {
+        {ALLE_ORTE.filter(o=>o.bId!=="nf").map(o => {
           const cnt = (bestand[o.id]||[]).length;
           return (
             <button key={o.id} onClick={()=>{setBId(o.bId);setOId(o.id);setFiltSch(null);}}
@@ -761,7 +761,7 @@ const UebersichtTab = ({bestand, einkauf, kassenbons, todos}) => {
       </div>
       <div style={{background:"white",borderRadius:14,padding:14,marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
         <h3 style={{margin:"0 0 10px",fontSize:26,fontWeight:800}}>📦 Bestand</h3>
-        {BEREICHE.map(b => {
+        {BEREICHE.filter(b=>b.id!=="nf").map(b => {
           const tot = b.orte.reduce((s,o)=>s+(bestand[o.id]||[]).length,0);
           return (
             <div key={b.id} style={{marginBottom:10}}>
@@ -1153,21 +1153,24 @@ const NonfoodTab = ({bestand, onAdd, onRemove}) => {
           </div>
 
           {/* Orte in Gruppe */}
-          <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:10}}>
-            {orteInGruppe.map(o=>{
-              const cnt=(bestand[o.id]||[]).length;
-              return (
-                <button key={o.id} onClick={()=>{setOId(o.id);setNeuFach(null);}}
-                  style={{padding:"5px 9px",borderRadius:14,border:"2px solid",fontSize:14,cursor:"pointer",fontWeight:oId===o.id?700:400,
-                    borderColor:oId===o.id?"#4f46e5":"#e5e7eb",
-                    background:oId===o.id?"#f0f0ff":"white",color:"#374151",
-                    display:"flex",alignItems:"center",gap:3}}>
-                  <span style={{background:"#6366f1",color:"white",borderRadius:"50%",width:17,height:17,display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,flexShrink:0}}>{o.nr}</span>
-                  {o.name}
-                  {cnt>0&&<span style={{background:"#6366f1",color:"white",borderRadius:8,padding:"0 5px",fontSize:11}}>{cnt}</span>}
-                </button>
-              );
-            })}
+          <div style={{background:'white',borderRadius:12,padding:'8px 10px',marginBottom:10,boxShadow:'0 1px 4px rgba(0,0,0,0.05)'}}>
+            <div style={{display:'flex',flexWrap:'wrap',gap:5}}>
+              {orteInGruppe.map(o=>{
+                const cnt=(bestand[o.id]||[]).length;
+                return (
+                  <button key={o.id} onClick={()=>{setOId(o.id);setNeuFach(null);}}
+                    style={{padding:'5px 10px',borderRadius:12,border:'2px solid',fontSize:15,cursor:'pointer',fontWeight:oId===o.id?800:500,
+                      borderColor:oId===o.id?'#4f46e5':'#e5e7eb',
+                      background:oId===o.id?'#6366f1':'white',
+                      color:oId===o.id?'white':'#374151',
+                      display:'flex',alignItems:'center',gap:4}}>
+                    <span style={{fontSize:11,opacity:0.7}}>#{o.nr}</span>
+                    {o.name}
+                    {cnt>0&&<span style={{background:oId===o.id?'rgba(255,255,255,0.3)':'#6366f1',color:'white',borderRadius:8,padding:'0 5px',fontSize:12,fontWeight:700}}>{cnt}</span>}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Fach-Auswahl */}
