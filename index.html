@@ -945,7 +945,8 @@ const AufgabenTab = ({todos, todosAnnelie, onAdd, onAddAnnelie, onToggle, onTogg
     if(a.erledigt!==b.erledigt) return a.erledigt?1:-1;
     const pd = (prioOrder[a.prioritaet]||2)-(prioOrder[b.prioritaet]||2);
     if(pd!==0) return pd;
-    return (a.datum||"").localeCompare(b.datum||"");
+    // Neuestes Datum oben (absteigend)
+    return (b.datum||"").localeCompare(a.datum||"");
   });
 
   const add = () => {
