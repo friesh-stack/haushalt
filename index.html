@@ -74,6 +74,8 @@ const datum = () => new Date().toLocaleDateString("de-DE");
 const lsGet = k => { try { return localStorage.getItem(k)||""; } catch { return ""; }};
 const lsSet = (k,v) => { try { localStorage.setItem(k,v); } catch {} };
 const lsDel = k => { try { localStorage.removeItem(k); } catch {} };
+const cacheSet = (path, data) => { try { localStorage.setItem("hm_cache_"+path, JSON.stringify(data)); } catch {} };
+const cacheGet = path => { try { const d=localStorage.getItem("hm_cache_"+path); return d?JSON.parse(d):null; } catch { return null; } };
 
 // ── Lokaler Parser (kein API nötig) ───────────────────────
 function parseText(text) {
