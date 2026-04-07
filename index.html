@@ -42,38 +42,38 @@ const BEREICHE = [
     {id:"ke5", name:"Keller Sektflaschen",        icon:"🥂", info:"Nr.12", nr:12, faecher:[]},
     {id:"ke6", name:"Keller Gemüse & Obst",       icon:"🥔", info:"Nr.13", nr:13, faecher:[]},
   ]},
-  {id:"nf", name:"Nonfood", icon:"📦", orte:[
-    // Großer Keller Regal
-    {id:"nf01", name:"Nonfood Regal 1 Links",  icon:"🗄️", info:"Nr.14 · Gr.Keller", nr:14, faecher:[]},
-    {id:"nf02", name:"Nonfood Regal 1 Mitte",  icon:"🗄️", info:"Nr.15 · Gr.Keller", nr:15, faecher:[]},
-    {id:"nf03", name:"Nonfood Regal 1 Rechts", icon:"🗄️", info:"Nr.16 · Gr.Keller", nr:16, faecher:[]},
-    {id:"nf04", name:"Nonfood Regal 2 Links",  icon:"🗄️", info:"Nr.17 · Gr.Keller", nr:17, faecher:[]},
-    {id:"nf05", name:"Nonfood Regal 2 Mitte",  icon:"🗄️", info:"Nr.18 · Gr.Keller", nr:18, faecher:[]},
-    {id:"nf06", name:"Nonfood Regal 2 Rechts", icon:"🗄️", info:"Nr.19 · Gr.Keller", nr:19, faecher:[]},
-    {id:"nf07", name:"Nonfood Regal 3 Links",  icon:"🗄️", info:"Nr.20 · Gr.Keller", nr:20, faecher:[]},
-    {id:"nf08", name:"Nonfood Regal 3 Mitte",  icon:"🗄️", info:"Nr.21 · Gr.Keller", nr:21, faecher:[]},
-    {id:"nf09", name:"Nonfood Regal 3 Rechts", icon:"🗄️", info:"Nr.22 · Gr.Keller", nr:22, faecher:[]},
-    {id:"nf10", name:"Nonfood Regal 4 Links",  icon:"🗄️", info:"Nr.23 · Gr.Keller", nr:23, faecher:[]},
-    {id:"nf11", name:"Nonfood Regal 4 Mitte",  icon:"🗄️", info:"Nr.24 · Gr.Keller", nr:24, faecher:[]},
-    {id:"nf12", name:"Nonfood Regal 4 Rechts", icon:"🗄️", info:"Nr.25 · Gr.Keller", nr:25, faecher:[]},
+  {id:"nf", name:"Gr. Keller", icon:"🏠", orte:[
+    // Regalwand
+    {id:"nf01", name:"Regal 1 Links",  icon:"🗄️", info:"Nr.14", nr:14, gruppe:"Regalwand", faecher:[]},
+    {id:"nf02", name:"Regal 1 Mitte",  icon:"🗄️", info:"Nr.15", nr:15, gruppe:"Regalwand", faecher:[]},
+    {id:"nf03", name:"Regal 1 Rechts", icon:"🗄️", info:"Nr.16", nr:16, gruppe:"Regalwand", faecher:[]},
+    {id:"nf04", name:"Regal 2 Links",  icon:"🗄️", info:"Nr.17", nr:17, gruppe:"Regalwand", faecher:[]},
+    {id:"nf05", name:"Regal 2 Mitte",  icon:"🗄️", info:"Nr.18", nr:18, gruppe:"Regalwand", faecher:[]},
+    {id:"nf06", name:"Regal 2 Rechts", icon:"🗄️", info:"Nr.19", nr:19, gruppe:"Regalwand", faecher:[]},
+    {id:"nf07", name:"Regal 3 Links",  icon:"🗄️", info:"Nr.20", nr:20, gruppe:"Regalwand", faecher:[]},
+    {id:"nf08", name:"Regal 3 Mitte",  icon:"🗄️", info:"Nr.21", nr:21, gruppe:"Regalwand", faecher:[]},
+    {id:"nf09", name:"Regal 3 Rechts", icon:"🗄️", info:"Nr.22", nr:22, gruppe:"Regalwand", faecher:[]},
+    {id:"nf10", name:"Regal 4 Links",  icon:"🗄️", info:"Nr.23", nr:23, gruppe:"Regalwand", faecher:[]},
+    {id:"nf11", name:"Regal 4 Mitte",  icon:"🗄️", info:"Nr.24", nr:24, gruppe:"Regalwand", faecher:[]},
+    {id:"nf12", name:"Regal 4 Rechts", icon:"🗄️", info:"Nr.25", nr:25, gruppe:"Regalwand", faecher:[]},
     // Keller Mitte
-    {id:"nf13", name:"Nonfood Keller Mitte",   icon:"🏚️", info:"Nr.26 · Fächer 1–6", nr:26, faecher:[1,2,3,4,5,6]},
+    {id:"nf13", name:"Keller Mitte",   icon:"🏚️", info:"Nr.26 · Fächer 1–6", nr:26, gruppe:"Keller Mitte", faecher:[1,2,3,4,5,6]},
     // Kleiderschränke
-    {id:"nf14", name:"Nonfood Kleiderschrank Links",  icon:"👔", info:"Nr.27 · Regal 1–4", nr:27, faecher:[1,2,3,4]},
-    {id:"nf15", name:"Nonfood Kleiderschrank Mitte",  icon:"👔", info:"Nr.28 · Regal 1–3", nr:28, faecher:[1,2,3]},
-    {id:"nf16", name:"Nonfood Kleiderschrank Rechts", icon:"👔", info:"Nr.29 · Regal 1–4", nr:29, faecher:[1,2,3,4]},
-    // Schränke 1–5
-    {id:"nf17", name:"Nonfood Schrank 1", icon:"🚪", info:"Nr.30 · Regal 1–4", nr:30, faecher:[1,2,3,4]},
-    {id:"nf18", name:"Nonfood Schrank 2", icon:"🚪", info:"Nr.31 · Regal 1–4", nr:31, faecher:[1,2,3,4]},
-    {id:"nf19", name:"Nonfood Schrank 3", icon:"🚪", info:"Nr.32 · Regal 1–4", nr:32, faecher:[1,2,3,4]},
-    {id:"nf20", name:"Nonfood Schrank 4", icon:"🚪", info:"Nr.33 · Regal 1–4", nr:33, faecher:[1,2,3,4]},
-    {id:"nf21", name:"Nonfood Schrank 5", icon:"🚪", info:"Nr.34 · Regal 1–4", nr:34, faecher:[1,2,3,4]},
+    {id:"nf14", name:"Kleiderschrank Links",  icon:"👔", info:"Nr.27 · Regal 1–4", nr:27, gruppe:"Kleiderschrank", faecher:[1,2,3,4]},
+    {id:"nf15", name:"Kleiderschrank Mitte",  icon:"👔", info:"Nr.28 · Regal 1–3", nr:28, gruppe:"Kleiderschrank", faecher:[1,2,3]},
+    {id:"nf16", name:"Kleiderschrank Rechts", icon:"👔", info:"Nr.29 · Regal 1–4", nr:29, gruppe:"Kleiderschrank", faecher:[1,2,3,4]},
+    // Schränke
+    {id:"nf17", name:"Schrank 1", icon:"🚪", info:"Nr.30 · Regal 1–4", nr:30, gruppe:"Schränke", faecher:[1,2,3,4]},
+    {id:"nf18", name:"Schrank 2", icon:"🚪", info:"Nr.31 · Regal 1–4", nr:31, gruppe:"Schränke", faecher:[1,2,3,4]},
+    {id:"nf19", name:"Schrank 3", icon:"🚪", info:"Nr.32 · Regal 1–4", nr:32, gruppe:"Schränke", faecher:[1,2,3,4]},
+    {id:"nf20", name:"Schrank 4", icon:"🚪", info:"Nr.33 · Regal 1–4", nr:33, gruppe:"Schränke", faecher:[1,2,3,4]},
+    {id:"nf21", name:"Schrank 5", icon:"🚪", info:"Nr.34 · Regal 1–4", nr:34, gruppe:"Schränke", faecher:[1,2,3,4]},
     // Schubladenschrank
-    {id:"nf22", name:"Nonfood Schubladenschrank Schubladen", icon:"🗃️", info:"Nr.35 · Schublade 1–4", nr:35, faecher:[1,2,3,4]},
-    {id:"nf23", name:"Nonfood Schubladenschrank Regal",      icon:"🗃️", info:"Nr.36 · Regal 1–4",    nr:36, faecher:[1,2,3,4]},
-    // Sonstige Räume
-    {id:"nf24", name:"Nonfood Kleiner Raum",        icon:"🚪", info:"Nr.37", nr:37, faecher:[]},
-    {id:"nf25", name:"Nonfood Raum unter Treppe",   icon:"🪜", info:"Nr.38", nr:38, faecher:[]},
+    {id:"nf22", name:"Schubladenschrank Schubladen", icon:"🗃️", info:"Nr.35 · Schublade 1–4", nr:35, gruppe:"Schubladenschrank", faecher:[1,2,3,4]},
+    {id:"nf23", name:"Schubladenschrank Regal",      icon:"🗃️", info:"Nr.36 · Regal 1–4",    nr:36, gruppe:"Schubladenschrank", faecher:[1,2,3,4]},
+    // Sonstige
+    {id:"nf24", name:"Kleiner Raum",      icon:"🚪", info:"Nr.37", nr:37, gruppe:"Weitere Räume", faecher:[]},
+    {id:"nf25", name:"Raum unter Treppe", icon:"🪜", info:"Nr.38", nr:38, gruppe:"Weitere Räume", faecher:[]},
   ]}
 ];
 const ALLE_ORTE = BEREICHE.flatMap(b => b.orte.map(o => ({...o, bName:b.name, bId:b.id})));
@@ -1073,15 +1073,20 @@ END:VCALENDAR`;
 const NonfoodTab = ({bestand, onAdd, onRemove}) => {
   const [oId, setOId] = useState("nf01");
   const [neuFach, setNeuFach] = useState(null);
-  const [sortAZ, setSortAZ] = useState(false);
   const [busy, setBusy] = useState(false);
   const [zuletzt, setZuletzt] = useState("");
   const [editItem, setEditItem] = useState(null);
+  const [zeigAZ, setZeigAZ] = useState(false);
 
   const ort = ALLE_ORTE.find(o=>o.id===oId);
   const hatFach = (ort?.faecher||[]).length > 0;
   const alleItems = bestand[oId] || [];
-  const items = sortAZ ? [...alleItems].sort((a,b)=>a.name.localeCompare(b.name,"de")) : alleItems;
+
+  // Gruppen für Navigation
+  const GRUPPEN_NF = ["Regalwand","Kleiderschrank","Schränke","Schubladenschrank","Keller Mitte","Weitere Räume"];
+  const [aktGruppe, setAktGruppe] = useState("Regalwand");
+
+  const orteInGruppe = NONFOOD_ORTE.filter(o=>o.gruppe===aktGruppe);
 
   const hinzufuegen = async (txt, fach) => {
     setBusy(true);
@@ -1091,137 +1096,152 @@ const NonfoodTab = ({bestand, onAdd, onRemove}) => {
       catch { parsed = parseText(txt); }
       if(parsed && parsed.length) {
         onAdd(oId, parsed.map(x=>({...x, fach: fach!=null ? Number(fach) : null})));
-        setZuletzt("✓ " + parsed.length + " Artikel" + (fach!=null ? " → Fach "+fach : ""));
+        setZuletzt("✓ " + parsed.length + " Artikel" + (fach!=null ? " → Regal/Fach "+fach : ""));
         setTimeout(()=>setZuletzt(""), 3000);
       }
     } catch(e) { console.error(e); }
     setBusy(false);
   };
 
-  // Alle Nonfood Artikel A-Z
-  const alleNonfood = NONFOOD_ORTE.flatMap(o=>(bestand[o.id]||[]).map(i=>({...i,ort:o})));
-  const nonfoodAZ = [...alleNonfood].sort((a,b)=>a.name.localeCompare(b.name,"de"));
-  const gesamtN = alleNonfood.length;
+  const alleNF = NONFOOD_ORTE.flatMap(o=>(bestand[o.id]||[]).map(i=>({...i,ort:o})));
+  const nfAZ = [...alleNF].sort((a,b)=>a.name.localeCompare(b.name,"de"));
 
   return (
     <div>
-      {/* Ort-Auswahl als scrollbare Liste */}
-      <div style={{background:"white",borderRadius:14,padding:10,marginBottom:10,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
-        <p style={{margin:"0 0 6px",fontSize:15,fontWeight:700,color:"#9ca3af",textTransform:"uppercase"}}>Lagerort wählen</p>
-        <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
-          {NONFOOD_ORTE.map(o=>{
-            const cnt=(bestand[o.id]||[]).length;
-            return (
-              <button key={o.id} onClick={()=>{setOId(o.id);setNeuFach(null);}}
-                style={{padding:"5px 9px",borderRadius:16,border:"2px solid",fontSize:14,cursor:"pointer",fontWeight:oId===o.id?700:400,
-                  borderColor:oId===o.id?"#6366f1":"#e5e7eb",
-                  background:oId===o.id?"#6366f1":"white",
-                  color:oId===o.id?"white":"#374151",
-                  display:"flex",alignItems:"center",gap:3}}>
-                {o.nr&&<span style={{background:oId===o.id?"rgba(255,255,255,0.3)":"#6366f1",color:"white",borderRadius:"50%",width:17,height:17,display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800}}>{o.nr}</span>}
-                {o.name.replace("Nonfood ","")}
-                {cnt>0&&<span style={{background:"#6366f1",color:"white",borderRadius:10,padding:"0 5px",fontSize:11}}>{cnt}</span>}
-              </button>
-            );
-          })}
-        </div>
+      {/* A-Z Toggle */}
+      <div style={{display:"flex",gap:8,marginBottom:10}}>
+        <button onClick={()=>setZeigAZ(false)} style={{flex:1,padding:"9px",borderRadius:10,border:"2px solid",borderColor:!zeigAZ?"#6366f1":"#e5e7eb",background:!zeigAZ?"#6366f1":"white",color:!zeigAZ?"white":"#374151",fontSize:16,fontWeight:700,cursor:"pointer"}}>📦 Einlagern</button>
+        <button onClick={()=>setZeigAZ(true)} style={{flex:1,padding:"9px",borderRadius:10,border:"2px solid",borderColor:zeigAZ?"#6366f1":"#e5e7eb",background:zeigAZ?"#6366f1":"white",color:zeigAZ?"white":"#374151",fontSize:16,fontWeight:700,cursor:"pointer"}}>📋 Alle A–Z ({alleNF.length})</button>
       </div>
 
-      {/* Fach-Auswahl */}
-      {hatFach && (
-        <div style={{background:"white",borderRadius:12,padding:10,marginBottom:10,boxShadow:"0 1px 4px rgba(0,0,0,0.05)"}}>
-          <span style={{fontSize:14,fontWeight:700,color:"#9ca3af"}}>FACH/REGAL: </span>
-          <SchBtn label="– alle" aktiv={neuFach===null} onClick={()=>setNeuFach(null)} n={0}/>
-          {(ort.faecher||[]).map(f=>(
-            <SchBtn key={f} label={`${f}`} aktiv={neuFach===f} onClick={()=>setNeuFach(Number(f))} n={0}/>
-          ))}
-          {neuFach!=null&&<span style={{fontSize:14,color:"white",background:"#e53e3e",padding:"2px 9px",borderRadius:6,fontWeight:800,marginLeft:6}}>✓ Fach {neuFach}</span>}
+      {zeigAZ ? (
+        /* A-Z Gesamtliste */
+        <div style={{background:"white",borderRadius:14,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+          {nfAZ.length===0
+            ?<div style={{textAlign:"center",padding:"20px",color:"#9ca3af",fontSize:16}}>Noch keine Artikel</div>
+            :nfAZ.map((item,i)=>(
+              <div key={item.id+item.ort.id} style={{display:"flex",alignItems:"center",padding:"9px 14px",borderBottom:i<nfAZ.length-1?"1px solid #f3f4f6":"none",gap:8}}>
+                <div style={{flex:1}}>
+                  <span style={{fontSize:19,fontWeight:800}}>{item.name}</span>
+                  <span style={{fontSize:15,color:"#6b7280",marginLeft:6,fontWeight:700}}>{item.qty} {item.unit}</span>
+                  {item.fach!=null&&<span style={{fontSize:13,color:"white",marginLeft:5,background:"#6366f1",padding:"2px 6px",borderRadius:5,fontWeight:700}}>Regal {item.fach}</span>}
+                </div>
+                <div style={{textAlign:"right",flexShrink:0}}>
+                  <div style={{fontSize:14,fontWeight:700,color:"#6366f1"}}>{item.ort.name}</div>
+                  <div style={{fontSize:12,color:"#9ca3af"}}>Nr.{item.ort.nr} · {item.ort.gruppe}</div>
+                </div>
+              </div>
+            ))
+          }
         </div>
-      )}
-
-      {/* Eingabe */}
-      {zuletzt&&<div style={{background:"#6366f1",color:"white",borderRadius:10,padding:"7px 14px",fontSize:16,fontWeight:700,textAlign:"center",marginBottom:8}}>{zuletzt}</div>}
-      <EingabeFeld ph={`Artikel für ${ort?.name?.replace("Nonfood ","")||""}…`} onOK={txt=>hinzufuegen(txt,neuFach)} busy={busy}/>
-
-      {/* Artikelliste */}
-      <div style={{background:"white",borderRadius:14,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.06)",marginBottom:12}}>
-        <div style={{padding:"9px 14px",background:"#f0f0ff",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <span style={{fontWeight:700,fontSize:16}}>📦 {ort?.name?.replace("Nonfood ","")} <span style={{fontSize:13,color:"#9ca3af"}}>({ort?.info})</span></span>
-          <div style={{display:"flex",gap:6,alignItems:"center"}}>
-            <button onClick={()=>setSortAZ(s=>!s)} style={{padding:"2px 9px",borderRadius:10,border:"2px solid",borderColor:sortAZ?"#6366f1":"#e5e7eb",background:sortAZ?"#6366f1":"white",color:sortAZ?"white":"#374151",fontSize:14,cursor:"pointer",fontWeight:700}}>{sortAZ?"✓ A→Z":"A→Z"}</button>
-            <span style={{fontSize:16,color:"#6b7280"}}>{items.length}</span>
+      ) : (
+        <>
+          {/* Gruppen-Tabs */}
+          <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:10}}>
+            {GRUPPEN_NF.map(g=>{
+              const cnt = NONFOOD_ORTE.filter(o=>o.gruppe===g).reduce((s,o)=>s+(bestand[o.id]||[]).length,0);
+              return (
+                <button key={g} onClick={()=>{setAktGruppe(g);setOId(NONFOOD_ORTE.find(o=>o.gruppe===g)?.id||"nf01");setNeuFach(null);}}
+                  style={{padding:"6px 11px",borderRadius:16,border:"2px solid",fontSize:14,cursor:"pointer",fontWeight:aktGruppe===g?700:400,
+                    borderColor:aktGruppe===g?"#6366f1":"#e5e7eb",
+                    background:aktGruppe===g?"#6366f1":"white",
+                    color:aktGruppe===g?"white":"#374151"}}>
+                  {g}{cnt>0&&<span style={{marginLeft:4,background:aktGruppe===g?"rgba(255,255,255,0.3)":"#6366f1",color:"white",borderRadius:8,padding:"0 5px",fontSize:12}}>{cnt}</span>}
+                </button>
+              );
+            })}
           </div>
-        </div>
-        {items.length===0
-          ?<div style={{textAlign:"center",padding:"20px",color:"#9ca3af",fontSize:16}}>Leer – Artikel eingeben</div>
-          :items.map((item,i)=>(
-            <div key={item.id}>
-              {editItem?.id===item.id ? (
-                <div style={{padding:"10px 14px",background:"#f0f0ff"}}>
-                  <input value={editItem.name} onChange={e=>setEditItem(p=>({...p,name:e.target.value}))} autoFocus
-                    style={{width:"100%",padding:"8px 10px",borderRadius:8,border:"2px solid #6366f1",fontSize:18,fontWeight:700,outline:"none",marginBottom:6}}/>
-                  <div style={{display:"flex",gap:6,marginBottom:6}}>
-                    <input type="number" value={editItem.qty} onChange={e=>setEditItem(p=>({...p,qty:e.target.value}))} onFocus={e=>e.target.select()}
-                      style={{width:70,padding:"7px 8px",borderRadius:8,border:"1.5px solid #e5e7eb",fontSize:17,outline:"none"}}/>
-                    <select value={editItem.unit} onChange={e=>setEditItem(p=>({...p,unit:e.target.value}))}
-                      style={{flex:1,padding:"7px 8px",borderRadius:8,border:"1.5px solid #e5e7eb",fontSize:16,outline:"none"}}>
-                      {["Stück","kg","g","L","ml","Packung","Flasche","Dose","Glas","Beutel","Kasten","Paar","Set"].map(u=><option key={u}>{u}</option>)}
-                    </select>
-                    {hatFach&&<select value={editItem.fach||""} onChange={e=>setEditItem(p=>({...p,fach:e.target.value?Number(e.target.value):null}))}
-                      style={{width:80,padding:"7px",borderRadius:8,border:"1.5px solid #e5e7eb",fontSize:15,outline:"none"}}>
-                      <option value="">–</option>
-                      {(ort?.faecher||[]).map(f=><option key={f} value={f}>Fach {f}</option>)}
-                    </select>}
-                  </div>
-                  <div style={{display:"flex",gap:6}}>
-                    <button onClick={()=>{onRemove(oId,item.id);onAdd(oId,[{name:editItem.name,qty:parseFloat(editItem.qty)||1,unit:editItem.unit,fach:editItem.fach??null}]);setEditItem(null);}}
-                      style={{flex:1,padding:"9px",background:"#6366f1",color:"white",border:"none",borderRadius:8,cursor:"pointer",fontWeight:800,fontSize:17}}>✓ Speichern</button>
-                    <button onClick={()=>setEditItem(null)} style={{padding:"9px 14px",background:"#e5e7eb",color:"#374151",border:"none",borderRadius:8,cursor:"pointer",fontSize:17}}>✕</button>
-                  </div>
-                </div>
-              ):(
-                <div style={{display:"flex",alignItems:"center",padding:"10px 14px",borderBottom:i<items.length-1?"1px solid #f3f4f6":"none",gap:8,cursor:"pointer"}} onClick={()=>setEditItem({...item})}>
-                  <div style={{flex:1}}>
-                    <span style={{fontSize:20,fontWeight:800}}>{item.name}</span>
-                    <span style={{fontSize:16,color:"#6b7280",marginLeft:8,fontWeight:700}}>{item.qty} {item.unit}</span>
-                    {item.fach!=null&&<span style={{fontSize:14,color:"white",marginLeft:6,background:"#6366f1",padding:"2px 7px",borderRadius:6,fontWeight:700}}>Fach {item.fach}</span>}
-                    <span style={{fontSize:12,color:"#d0d0d0",marginLeft:5}}>✏️</span>
-                  </div>
-                  <span style={{fontSize:12,color:"#d1d5db",flexShrink:0}}>{item.datum}</span>
-                  <button onClick={e=>{e.stopPropagation();onRemove(oId,item.id);}} style={{background:"#fee2e2",border:"none",cursor:"pointer",color:"#dc2626",width:30,height:30,borderRadius:7,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>×</button>
-                </div>
-              )}
-            </div>
-          ))
-        }
-      </div>
 
-      {/* Nonfood A-Z Gesamtliste */}
-      <div style={{background:"white",borderRadius:14,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
-        <div style={{padding:"9px 14px",background:"#4f46e5",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <span style={{color:"white",fontWeight:800,fontSize:16}}>📋 Alle Nonfood A–Z</span>
-          <span style={{color:"rgba(255,255,255,0.8)",fontSize:15}}>{gesamtN} Artikel</span>
-        </div>
-        {nonfoodAZ.length===0
-          ?<div style={{textAlign:"center",padding:"16px",color:"#9ca3af",fontSize:15}}>Noch keine Artikel</div>
-          :nonfoodAZ.map((item,i)=>(
-            <div key={item.id+item.ort.id} style={{display:"flex",alignItems:"center",padding:"8px 14px",borderBottom:i<nonfoodAZ.length-1?"1px solid #f3f4f6":"none",gap:8}}>
-              <div style={{flex:1}}>
-                <span style={{fontSize:18,fontWeight:800}}>{item.name}</span>
-                <span style={{fontSize:15,color:"#6b7280",marginLeft:6,fontWeight:700}}>{item.qty} {item.unit}</span>
-                {item.fach!=null&&<span style={{fontSize:13,color:"white",marginLeft:5,background:"#6366f1",padding:"1px 6px",borderRadius:5,fontWeight:700}}>Fach {item.fach}</span>}
-              </div>
-              <div style={{textAlign:"right",flexShrink:0}}>
-                <div style={{fontSize:14,fontWeight:700,color:"#6366f1"}}>{item.ort.name.replace("Nonfood ","")}</div>
-                <div style={{fontSize:12,color:"#9ca3af"}}>Nr.{item.ort.nr}</div>
-              </div>
+          {/* Orte in Gruppe */}
+          <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:10}}>
+            {orteInGruppe.map(o=>{
+              const cnt=(bestand[o.id]||[]).length;
+              return (
+                <button key={o.id} onClick={()=>{setOId(o.id);setNeuFach(null);}}
+                  style={{padding:"5px 9px",borderRadius:14,border:"2px solid",fontSize:14,cursor:"pointer",fontWeight:oId===o.id?700:400,
+                    borderColor:oId===o.id?"#4f46e5":"#e5e7eb",
+                    background:oId===o.id?"#f0f0ff":"white",color:"#374151",
+                    display:"flex",alignItems:"center",gap:3}}>
+                  <span style={{background:"#6366f1",color:"white",borderRadius:"50%",width:17,height:17,display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,flexShrink:0}}>{o.nr}</span>
+                  {o.name}
+                  {cnt>0&&<span style={{background:"#6366f1",color:"white",borderRadius:8,padding:"0 5px",fontSize:11}}>{cnt}</span>}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Fach-Auswahl */}
+          {hatFach && (
+            <div style={{background:"white",borderRadius:12,padding:"8px 12px",marginBottom:8,boxShadow:"0 1px 4px rgba(0,0,0,0.05)",display:"flex",flexWrap:"wrap",gap:5,alignItems:"center"}}>
+              <span style={{fontSize:14,fontWeight:700,color:"#9ca3af"}}>REGAL/FACH:</span>
+              <SchBtn label="– alle" aktiv={neuFach===null} onClick={()=>setNeuFach(null)} n={0}/>
+              {(ort.faecher||[]).map(f=>(
+                <SchBtn key={f} label={`${f}`} aktiv={neuFach===f} onClick={()=>setNeuFach(Number(f))} n={0}/>
+              ))}
+              {neuFach!=null&&<span style={{fontSize:14,color:"white",background:"#e53e3e",padding:"2px 9px",borderRadius:6,fontWeight:800}}>✓ Regal {neuFach}</span>}
             </div>
-          ))
-        }
-      </div>
+          )}
+
+          {/* Toast + Eingabe */}
+          {zuletzt&&<div style={{background:"#6366f1",color:"white",borderRadius:10,padding:"7px 14px",fontSize:16,fontWeight:700,textAlign:"center",marginBottom:8}}>{zuletzt}</div>}
+          <EingabeFeld ph={`Artikel für ${ort?.name||""}…`} onOK={txt=>hinzufuegen(txt,neuFach)} busy={busy}/>
+
+          {/* Artikelliste */}
+          <div style={{background:"white",borderRadius:14,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+            <div style={{padding:"8px 14px",background:"#f0f0ff",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <span style={{fontWeight:700,fontSize:16}}>{ort?.icon} {ort?.name} <span style={{fontSize:13,color:"#9ca3af"}}>{ort?.info}</span></span>
+              <span style={{fontSize:16,color:"#6b7280"}}>{alleItems.length} Artikel</span>
+            </div>
+            {alleItems.length===0
+              ?<div style={{textAlign:"center",padding:"18px",color:"#9ca3af",fontSize:16}}>Leer</div>
+              :alleItems.map((item,i)=>(
+                <div key={item.id}>
+                  {editItem?.id===item.id ? (
+                    <div style={{padding:"10px 14px",background:"#f0f0ff"}}>
+                      <input value={editItem.name} onChange={e=>setEditItem(p=>({...p,name:e.target.value}))} autoFocus
+                        style={{width:"100%",padding:"8px 10px",borderRadius:8,border:"2px solid #6366f1",fontSize:18,fontWeight:700,outline:"none",marginBottom:6}}/>
+                      <div style={{display:"flex",gap:6,marginBottom:6}}>
+                        <input type="number" value={editItem.qty} onChange={e=>setEditItem(p=>({...p,qty:e.target.value}))} onFocus={e=>e.target.select()}
+                          style={{width:70,padding:"7px",borderRadius:8,border:"1.5px solid #e5e7eb",fontSize:17,outline:"none"}}/>
+                        <select value={editItem.unit} onChange={e=>setEditItem(p=>({...p,unit:e.target.value}))}
+                          style={{flex:1,padding:"7px",borderRadius:8,border:"1.5px solid #e5e7eb",fontSize:16,outline:"none"}}>
+                          {["Stück","kg","g","L","ml","Packung","Flasche","Dose","Paar","Set","Kasten"].map(u=><option key={u}>{u}</option>)}
+                        </select>
+                        {hatFach&&<select value={editItem.fach||""} onChange={e=>setEditItem(p=>({...p,fach:e.target.value?Number(e.target.value):null}))}
+                          style={{width:85,padding:"7px",borderRadius:8,border:"1.5px solid #e5e7eb",fontSize:15,outline:"none"}}>
+                          <option value="">–</option>
+                          {(ort?.faecher||[]).map(f=><option key={f} value={f}>Regal {f}</option>)}
+                        </select>}
+                      </div>
+                      <div style={{display:"flex",gap:6}}>
+                        <button onClick={()=>{onRemove(oId,item.id);onAdd(oId,[{name:editItem.name,qty:parseFloat(editItem.qty)||1,unit:editItem.unit,fach:editItem.fach??null}]);setEditItem(null);}}
+                          style={{flex:1,padding:"9px",background:"#6366f1",color:"white",border:"none",borderRadius:8,cursor:"pointer",fontWeight:800,fontSize:17}}>✓ Speichern</button>
+                        <button onClick={()=>setEditItem(null)} style={{padding:"9px 14px",background:"#e5e7eb",color:"#374151",border:"none",borderRadius:8,cursor:"pointer",fontSize:17}}>✕</button>
+                      </div>
+                    </div>
+                  ):(
+                    <div style={{display:"flex",alignItems:"center",padding:"10px 14px",borderBottom:i<alleItems.length-1?"1px solid #f3f4f6":"none",gap:8,cursor:"pointer"}} onClick={()=>setEditItem({...item})}>
+                      <div style={{flex:1}}>
+                        <span style={{fontSize:19,fontWeight:800}}>{item.name}</span>
+                        <span style={{fontSize:15,color:"#6b7280",marginLeft:8,fontWeight:700}}>{item.qty} {item.unit}</span>
+                        {item.fach!=null&&<span style={{fontSize:13,color:"white",marginLeft:6,background:"#6366f1",padding:"2px 6px",borderRadius:5,fontWeight:700}}>Regal {item.fach}</span>}
+                        <span style={{fontSize:12,color:"#d0d0d0",marginLeft:4}}>✏️</span>
+                      </div>
+                      <span style={{fontSize:12,color:"#d1d5db",flexShrink:0}}>{item.datum}</span>
+                      <button onClick={e=>{e.stopPropagation();onRemove(oId,item.id);}}
+                        style={{background:"#fee2e2",border:"none",cursor:"pointer",color:"#dc2626",width:30,height:30,borderRadius:7,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>×</button>
+                    </div>
+                  )}
+                </div>
+              ))
+            }
+          </div>
+        </>
+      )}
     </div>
   );
 };
+
 
 const App = () => {
   const [aktiv, setAktiv] = useState(!!lsGet("hm_fb"));
@@ -1314,7 +1334,7 @@ const App = () => {
   const gB = Object.values(bestand).reduce((s,a)=>s+a.length,0);
   const oE = einkauf.filter(i=>!i.erledigt).length;
   const oT = todos.filter(t=>!t.erledigt).length + todosAnnelie.filter(t=>!t.erledigt).length;
-  const TABS = [{id:"bestand",l:"Bestand",i:"📦"},{id:"einkauf",l:"Einkauf",i:"🛒"},{id:"nonfood",l:"Nonfood",i:"📦"},{id:"kassenbon",l:"Kassenbon",i:"🧾"},{id:"aufgaben",l:"Aufgaben",i:"✅"}];
+  const TABS = [{id:"bestand",l:"Bestand",i:"📦"},{id:"einkauf",l:"Einkauf",i:"🛒"},{id:"nonfood",l:"Keller 2",i:"📦"},{id:"kassenbon",l:"Kassenbon",i:"🧾"},{id:"aufgaben",l:"Aufgaben",i:"✅"}];
   const sC = sync==="ok"?"#4ade80":sync==="err"?"#f87171":"#fbbf24";
   const kalAktiv = lsGet("hm_kal")==="1";
 
