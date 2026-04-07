@@ -711,7 +711,7 @@ const EinkaufTab = ({einkauf, onAdd, onToggle, onRemove, onShop, onClear, onUpda
 const UebersichtTab = ({bestand, einkauf, kassenbons, todos}) => {
   const gB = Object.values(bestand).reduce((s,a)=>s+a.length,0);
   const oE = einkauf.filter(i=>!i.erledigt).length;
-  const oT = todos.filter(t=>!t.erledigt).length;
+  const oT = todos.filter(t=>!t.erledigt).length + todosAnnelie.filter(t=>!t.erledigt).length;
   return (
     <div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
@@ -829,86 +829,209 @@ const KassenbonTab = ({kassenbons, setKassenbons, onAddEinkauf}) => {
 };
 
 // ── AUFGABEN TAB ──────────────────────────────────────────
-const AufgabenTab = ({todos, onAdd, onToggle, onRemove}) => {
+const TodoArtikel = ({todo, onToggle, onRemove, onUpdate, PRIOS}) => {
+  const [edit, setEdit] = useState(false);
+  const [val, setVal] = useState({});
+  const [neuerSub, setNeuerSub] = useState("");
+  const p = PRIOS.find(x=>x.id===todo.prioritaet)||PRIOS[2];
+
+  const speichern = () => {
+    onUpdate(todo.id, {
+      text: val.text ?? todo.text,
+      prioritaet: val.prioritaet ?? todo.prioritaet,
+      subs: val.subs ?? todo.subs ?? []
+    });
+    setEdit(false);
+  };
+
+  const addSub = () => {
+    if(!neuerSub.trim()) return;
+    const subs = [...(todo.subs||[]), {id:uid(), text:neuerSub.trim(), erledigt:false}];
+    onUpdate(todo.id, {subs});
+    setNeuerSub("");
+  };
+
+  const togSub = (sid) => {
+    const subs = (todo.subs||[]).map(s=>s.id===sid?{...s,erledigt:!s.erledigt}:s);
+    onUpdate(todo.id, {subs});
+  };
+
+  const delSub = (sid) => {
+    const subs = (todo.subs||[]).filter(s=>s.id!==sid);
+    onUpdate(todo.id, {subs});
+  };
+
+  if(edit) return (
+    <div style={{padding:"12px 14px",background:"#f0f9f0",borderRadius:10,marginBottom:6,border:"2px solid #3d5c3f"}}>
+      <input value={val.text??todo.text} onChange={e=>setVal(p=>({...p,text:e.target.value}))}
+        autoFocus style={{width:"100%",padding:"10px 12px",borderRadius:8,border:"2px solid #3d5c3f",fontSize:20,fontWeight:700,outline:"none",marginBottom:8}}/>
+      <div style={{display:"flex",gap:6,marginBottom:8}}>
+        {PRIOS.map(pr=>(
+          <button key={pr.id} onClick={()=>setVal(p=>({...p,prioritaet:pr.id}))}
+            style={{flex:1,padding:"8px",borderRadius:8,border:"2px solid",borderColor:(val.prioritaet??todo.prioritaet)===pr.id?pr.c:"#e5e7eb",background:(val.prioritaet??todo.prioritaet)===pr.id?pr.c+"22":"white",color:pr.c,fontSize:15,cursor:"pointer",fontWeight:700}}>
+            {pr.l}
+          </button>
+        ))}
+      </div>
+      <p style={{fontSize:15,fontWeight:700,color:"#6b7280",margin:"0 0 6px"}}>Unterpunkte:</p>
+      {(val.subs??todo.subs??[]).map((s,i)=>(
+        <div key={s.id} style={{display:"flex",gap:6,marginBottom:4,alignItems:"center"}}>
+          <span style={{fontSize:16,color:"#6b7280",width:20}}>{i+1}.</span>
+          <span style={{flex:1,fontSize:16}}>{s.text}</span>
+          <button onClick={()=>delSub(s.id)} style={{background:"#fee2e2",border:"none",color:"#dc2626",borderRadius:6,width:26,height:26,cursor:"pointer",fontWeight:700,fontSize:15}}>×</button>
+        </div>
+      ))}
+      <div style={{display:"flex",gap:6,marginBottom:8}}>
+        <input value={neuerSub} onChange={e=>setNeuerSub(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addSub()}
+          placeholder="Neuer Unterpunkt…" style={{flex:1,padding:"8px 10px",borderRadius:8,border:"1.5px solid #e5e7eb",fontSize:16,outline:"none"}}/>
+        <button onClick={addSub} style={{padding:"8px 14px",background:"#3d5c3f",color:"white",border:"none",borderRadius:8,cursor:"pointer",fontSize:18,fontWeight:700}}>+</button>
+      </div>
+      <div style={{display:"flex",gap:6}}>
+        <button onClick={speichern} style={{flex:1,padding:"10px",background:"#3d5c3f",color:"white",border:"none",borderRadius:8,cursor:"pointer",fontWeight:800,fontSize:18}}>✓ Speichern</button>
+        <button onClick={()=>setEdit(false)} style={{padding:"10px 16px",background:"#e5e7eb",color:"#374151",border:"none",borderRadius:8,cursor:"pointer",fontSize:18}}>✕</button>
+      </div>
+    </div>
+  );
+
+  const subs = todo.subs||[];
+  const subsDone = subs.filter(s=>s.erledigt).length;
+  return (
+    <div style={{marginBottom:6}}>
+      <div style={{display:"flex",alignItems:"center",padding:"11px 14px",background:"white",borderRadius:subs.length?"10px 10px 0 0":"10px",gap:8,cursor:"pointer",opacity:todo.erledigt?0.5:1,borderLeft:`4px solid ${p.c}`}}
+        onClick={()=>setEdit(true)}>
+        <input type="checkbox" checked={todo.erledigt} onChange={e=>{e.stopPropagation();onToggle(todo.id);}}
+          style={{width:22,height:22,cursor:"pointer",accentColor:p.c,flexShrink:0}} onClick={e=>e.stopPropagation()}/>
+        <div style={{flex:1}}>
+          <span style={{fontSize:20,fontWeight:800,textDecoration:todo.erledigt?"line-through":"none"}}>{todo.text}</span>
+          {subs.length>0 && <span style={{fontSize:14,color:"#9ca3af",marginLeft:8}}>{subsDone}/{subs.length}</span>}
+          <div style={{fontSize:13,color:p.c,fontWeight:700,marginTop:1}}>{p.l} · {todo.datum}</div>
+        </div>
+        <span style={{fontSize:12,color:"#c0c9c0"}}>✏️</span>
+        <button onClick={e=>{e.stopPropagation();onRemove(todo.id);}} style={{background:"#fee2e2",border:"none",cursor:"pointer",color:"#dc2626",width:30,height:30,borderRadius:7,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>×</button>
+      </div>
+      {subs.length>0 && (
+        <div style={{background:"#fafafa",borderRadius:"0 0 10px 10px",border:"1px solid #f0f0f0",borderTop:"none",padding:"6px 14px"}}>
+          {subs.map((s,i)=>(
+            <div key={s.id} style={{display:"flex",alignItems:"center",gap:8,padding:"4px 0",opacity:s.erledigt?0.5:1}}>
+              <span style={{fontSize:15,color:"#9ca3af",width:18,fontWeight:700}}>{i+1}.</span>
+              <input type="checkbox" checked={s.erledigt} onChange={()=>togSub(s.id)} style={{width:18,height:18,accentColor:p.c,flexShrink:0}}/>
+              <span style={{flex:1,fontSize:17,textDecoration:s.erledigt?"line-through":"none"}}>{s.text}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const AufgabenTab = ({todos, todosAnnelie, onAdd, onAddAnnelie, onToggle, onToggleAnnelie, onRemove, onRemoveAnnelie, onUpdate, onUpdateAnnelie}) => {
   const [txt, setTxt] = useState("");
   const [prio, setPrio] = useState("normal");
+  const [aktListe, setAktListe] = useState("hj");
   const PRIOS = [{id:"hoch",l:"🔴 Hoch",c:"#dc2626"},{id:"mittel",l:"🟡 Mittel",c:"#f59e0b"},{id:"normal",l:"🟢 Normal",c:"#3d5c3f"}];
   const kalAn = lsGet("hm_kal")==="1";
-  const sorted = [...todos].sort((a,b)=>{const o={hoch:0,mittel:1,normal:2};if(a.erledigt!==b.erledigt)return a.erledigt?1:-1;return(o[a.prioritaet]||2)-(o[b.prioritaet]||2);});
-  const kalSync = typeof window !== "undefined" && window.localStorage?.getItem("hm_kal") === "1";
-  
-  const addKalender = async (text, prioritaet) => {
-    if(!kalSync) return;
-    try {
-      // Add to device calendar via URL scheme
-      const titel = encodeURIComponent(text);
-      const pLabel = prioritaet==="hoch"?"🔴 DRINGEND: ":prioritaet==="mittel"?"🟡 Wichtig: ":"🟢 ";
-      const url = `data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ASUMMARY:${pLabel}${titel}%0ADTSTART:${new Date().toISOString().replace(/[-:]/g,"").split(".")[0]}Z%0ADTEND:${new Date(Date.now()+3600000).toISOString().replace(/[-:]/g,"").split(".")[0]}Z%0AEND:VEVENT%0AEND:VCALENDAR`;
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "aufgabe.ics";
-      a.click();
-    } catch(e) { console.log("Kalender:", e); }
-  };
+
+  const aktTodos = aktListe==="hj" ? todos : todosAnnelie;
+  const aktOnAdd = aktListe==="hj" ? onAdd : onAddAnnelie;
+  const aktOnToggle = aktListe==="hj" ? onToggle : onToggleAnnelie;
+  const aktOnRemove = aktListe==="hj" ? onRemove : onRemoveAnnelie;
+  const aktOnUpdate = aktListe==="hj" ? onUpdate : onUpdateAnnelie;
+
+  // Sort: by prio (hoch→mittel→normal), then by date (oldest first), erledigt last
+  const prioOrder = {hoch:0, mittel:1, normal:2};
+  const sorted = [...aktTodos].sort((a,b)=>{
+    if(a.erledigt!==b.erledigt) return a.erledigt?1:-1;
+    const pd = (prioOrder[a.prioritaet]||2)-(prioOrder[b.prioritaet]||2);
+    if(pd!==0) return pd;
+    return (a.datum||"").localeCompare(b.datum||"");
+  });
 
   const add = () => {
     if(!txt.trim()) return;
-    onAdd(txt.trim(),prio);
-    addKalender(txt.trim(), prio);
+    aktOnAdd(txt.trim(), prio);
+    if(kalAn) {
+      try {
+        const ics = `BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+SUMMARY:${(prio==="hoch"?"🔴 ":prio==="mittel"?"🟡 ":"🟢 ")+txt.trim()}
+DTSTART:${new Date().toISOString().replace(/[-:.]/g,"").slice(0,15)}Z
+DTEND:${new Date(Date.now()+3600000).toISOString().replace(/[-:.]/g,"").slice(0,15)}Z
+END:VEVENT
+END:VCALENDAR`;
+        const blob = new Blob([ics],{type:"text/calendar"});
+        const a = document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="aufgabe.ics"; a.click();
+      } catch(e) {}
+    }
     setTxt("");
   };
+
+  const offen = sorted.filter(t=>!t.erledigt).length;
+  const erledigt = sorted.filter(t=>t.erledigt).length;
+
   return (
     <div>
-      <div style={{background:kalAn?"#e8f3e8":"#f3f4f6",borderRadius:10,padding:"10px 14px",marginBottom:10,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-        <span style={{fontSize:17,fontWeight:700,color:kalAn?"#2c5f2e":"#6b7280"}}>{kalAn?"📅 Kalender-Sync aktiv":"📅 Kalender-Sync aus"}</span>
-        <a href="javascript:void(0)" onClick={()=>{const v=lsGet("hm_kal")==="1"?"0":"1";lsSet("hm_kal",v);window.location.reload();}} style={{fontSize:15,color:"#3d5c3f",fontWeight:700,textDecoration:"underline"}}>{kalAn?"Ausschalten":"Einschalten"}</a>
+      {/* Listen-Auswahl */}
+      <div style={{display:"flex",gap:8,marginBottom:12}}>
+        {[{id:"hj",l:"👤 HJ"},{id:"annelie",l:"👤 Annelie"}].map(l=>(
+          <button key={l.id} onClick={()=>setAktListe(l.id)}
+            style={{flex:1,padding:"10px",borderRadius:10,border:"2px solid",borderColor:aktListe===l.id?"#3d5c3f":"#e5e7eb",background:aktListe===l.id?"#3d5c3f":"white",color:aktListe===l.id?"white":"#374151",fontSize:18,fontWeight:800,cursor:"pointer"}}>
+            {l.l}
+          </button>
+        ))}
       </div>
-      <div style={{background:"white",borderRadius:14,padding:14,marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
-        <p style={{margin:"0 0 6px",fontSize:26,fontWeight:700,color:"#9ca3af",textTransform:"uppercase"}}>Priorität</p>
-        <div style={{display:"flex",gap:6,marginBottom:10}}>
+
+      {/* Kalender Status */}
+      <div style={{background:kalAn?"#e8f3e8":"#f3f4f6",borderRadius:10,padding:"8px 14px",marginBottom:10,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <span style={{fontSize:16,fontWeight:700,color:kalAn?"#2c5f2e":"#6b7280"}}>{kalAn?"📅 Kalender aktiv":"📅 Kalender aus"}</span>
+        <button onClick={()=>{lsSet("hm_kal",kalAn?"0":"1");window.location.reload();}}
+          style={{padding:"4px 12px",borderRadius:8,border:"none",background:kalAn?"#dc2626":"#3d5c3f",color:"white",fontSize:14,cursor:"pointer",fontWeight:700}}>
+          {kalAn?"Aus":"Ein"}
+        </button>
+      </div>
+
+      {/* Eingabe */}
+      <div style={{background:"white",borderRadius:14,padding:14,marginBottom:10,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+        <div style={{display:"flex",gap:6,marginBottom:8,flexWrap:"wrap"}}>
           {PRIOS.map(p=>(
             <button key={p.id} onClick={()=>setPrio(p.id)}
-              style={{flex:1,padding:"7px 4px",borderRadius:10,border:"2px solid",borderColor:prio===p.id?p.c:"#e5e7eb",background:prio===p.id?p.c+"18":"white",color:prio===p.id?p.c:"#374151",fontSize:26,cursor:"pointer",fontWeight:700}}>
+              style={{flex:1,padding:"8px 4px",borderRadius:10,border:"2px solid",borderColor:prio===p.id?p.c:"#e5e7eb",background:prio===p.id?p.c+"18":"white",color:prio===p.id?p.c:"#374151",fontSize:16,cursor:"pointer",fontWeight:700}}>
               {p.l}
             </button>
           ))}
         </div>
         <div style={{display:"flex",gap:8}}>
-          <input value={txt} onChange={e=>setTxt(e.target.value)} onKeyDown={e=>e.key==="Enter"&&add()} placeholder="Neue Aufgabe…"
-            style={{flex:1,padding:"10px 12px",borderRadius:10,border:"1.5px solid #e5e7eb",fontSize:26,outline:"none",background:"#fafafa"}}/>
-          <Btn onClick={add} disabled={!txt.trim()}>+</Btn>
+          <input value={txt} onChange={e=>setTxt(e.target.value)} onKeyDown={e=>e.key==="Enter"&&add()}
+            placeholder={`Aufgabe für ${aktListe==="hj"?"HJ":"Annelie"}…`}
+            style={{flex:1,padding:"12px 14px",borderRadius:10,border:"1.5px solid #e5e7eb",fontSize:18,fontWeight:700,outline:"none",background:"#fafafa"}}/>
+          <button onClick={add} disabled={!txt.trim()} style={{padding:"12px 16px",background:!txt.trim()?"#e5e7eb":"#3d5c3f",color:!txt.trim()?"#9ca3af":"white",border:"none",borderRadius:10,cursor:"pointer",fontSize:22,fontWeight:800}}>+</button>
         </div>
       </div>
-      {todos.length>0&&(
-        <div style={{display:"flex",gap:8,marginBottom:12}}>
-          {[{v:todos.filter(t=>!t.erledigt).length,l:"Offen",c:"#f97316"},{v:todos.filter(t=>t.erledigt).length,l:"Erledigt",c:"#3d5c3f"}].map((s,i)=>(
-            <div key={i} style={{flex:1,background:"white",borderRadius:10,padding:"10px",textAlign:"center",boxShadow:"0 1px 4px rgba(0,0,0,0.05)"}}>
-              <div style={{fontSize:26,fontWeight:800,color:s.c}}>{s.v}</div>
-              <div style={{fontSize:26,color:"#9ca3af"}}>{s.l}</div>
-            </div>
-          ))}
+
+      {/* Stats */}
+      <div style={{display:"flex",gap:8,marginBottom:10}}>
+        <div style={{flex:1,background:"white",borderRadius:10,padding:"10px",textAlign:"center",boxShadow:"0 1px 4px rgba(0,0,0,0.05)"}}>
+          <div style={{fontSize:26,fontWeight:900,color:"#f97316"}}>{offen}</div>
+          <div style={{fontSize:14,color:"#9ca3af"}}>Offen</div>
         </div>
-      )}
-      <div style={{background:"white",borderRadius:14,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
-        {!sorted.length
-          ?<div style={{textAlign:"center",padding:"32px",color:"#9ca3af"}}><div style={{fontSize:36}}>✅</div><p style={{margin:"8px 0 0",fontSize:26,fontWeight:800}}>Keine Aufgaben</p></div>
-          :sorted.map((t,i)=>{const p=PRIOS.find(x=>x.id===t.prioritaet)||PRIOS[2];return(
-            <div key={t.id} style={{display:"flex",alignItems:"center",padding:"10px 14px",borderBottom:i<sorted.length-1?"1px solid #f3f4f6":"none",opacity:t.erledigt?0.4:1,gap:10}}>
-              <input type="checkbox" checked={t.erledigt} onChange={()=>onToggle(t.id)} style={{width:18,height:18,cursor:"pointer",accentColor:p.c,flexShrink:0}}/>
-              <div style={{flex:1}}>
-                <span style={{fontSize:26,fontWeight:700,textDecoration:t.erledigt?"line-through":"none"}}>{t.text}</span>
-                <div style={{fontSize:26,color:p.c,fontWeight:700,marginTop:1}}>{p.l}</div>
-              </div>
-              <span style={{fontSize:26,color:"#d1d5db"}}>{t.datum}</span>
-              <button onClick={()=>onRemove(t.id)} style={{background:"#fee2e2",border:"none",cursor:"pointer",color:"#dc2626",width:24,height:24,borderRadius:6,fontWeight:700,fontSize:26,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
-            </div>
-          );})}
+        <div style={{flex:1,background:"white",borderRadius:10,padding:"10px",textAlign:"center",boxShadow:"0 1px 4px rgba(0,0,0,0.05)"}}>
+          <div style={{fontSize:26,fontWeight:900,color:"#3d5c3f"}}>{erledigt}</div>
+          <div style={{fontSize:14,color:"#9ca3af"}}>Erledigt</div>
+        </div>
       </div>
+
+      {/* Liste */}
+      {!sorted.length
+        ? <div style={{textAlign:"center",padding:"32px",color:"#9ca3af"}}><div style={{fontSize:40}}>✅</div><p style={{margin:"8px 0 0",fontSize:18,fontWeight:700}}>Keine Aufgaben</p></div>
+        : sorted.map(t=>(
+            <TodoArtikel key={t.id} todo={t} onToggle={aktOnToggle} onRemove={aktOnRemove} onUpdate={aktOnUpdate} PRIOS={PRIOS}/>
+          ))
+      }
     </div>
   );
 };
 
-// ── HAUPT APP ─────────────────────────────────────────────
+
 const App = () => {
   const [aktiv, setAktiv] = useState(!!lsGet("hm_fb"));
   const [tab, setTab] = useState("bestand");
@@ -916,6 +1039,7 @@ const App = () => {
   const [einkauf, setEinkauf] = useState([]);
   const [kassenbons, setKassenbons] = useState([]);
   const [todos, setTodos] = useState([]);
+  const [todosAnnelie, setTodosAnnelie] = useState([]);
   const [geladen, setGeladen] = useState(false);
   const [sync, setSync] = useState("idle");
   const writing = useRef(false);
@@ -923,14 +1047,31 @@ const App = () => {
   const laden = useCallback(async (still=false) => {
     const fb = lsGet("hm_fb"); if(!fb) return;
     if(!still) setSync("syncing");
+    // Cache-first: sofort aus lokalem Cache laden
+    if(!still) {
+      const paths = ["bestand","einkauf","kassenbons","todos","todosAnnelie"];
+      const setters = [
+        v=>{ if(v&&typeof v==="object") setBestand(v); },
+        v=>{ if(v){ const a=Array.isArray(v)?v:Object.values(v); setEinkauf(a); }},
+        v=>{ if(v){ const a=Array.isArray(v)?v:Object.values(v); setKassenbons(a); }},
+        v=>{ if(v){ const a=Array.isArray(v)?v:Object.values(v); setTodos(a); }},
+        v=>{ if(v){ const a=Array.isArray(v)?v:Object.values(v); setTodosAnnelie(a); }},
+      ];
+      paths.forEach((p,i) => { const c=cacheGet(p); if(c) setters[i](c); });
+      setGeladen(true); // App sofort zeigen
+    }
     try {
-      const [b,e,k,t] = await Promise.all([fbLesen("bestand"),fbLesen("einkauf"),fbLesen("kassenbons"),fbLesen("todos")]);
-      if(b && typeof b==="object") setBestand(b);
-      if(e) setEinkauf(Array.isArray(e)?e:Object.values(e));
-      if(k) setKassenbons(Array.isArray(k)?k:Object.values(k));
-      if(t) setTodos(Array.isArray(t)?t:Object.values(t));
+      const [b,e,k,t,ta] = await Promise.all([
+        fbLesen("bestand"),fbLesen("einkauf"),fbLesen("kassenbons"),
+        fbLesen("todos"),fbLesen("todosAnnelie")
+      ]);
+      if(b && typeof b==="object") { setBestand(b); cacheSet("bestand",b); }
+      if(e) { const a=Array.isArray(e)?e:Object.values(e); setEinkauf(a); cacheSet("einkauf",a); }
+      if(k) { const a=Array.isArray(k)?k:Object.values(k); setKassenbons(a); cacheSet("kassenbons",a); }
+      if(t) { const a=Array.isArray(t)?t:Object.values(t); setTodos(a); cacheSet("todos",a); }
+      if(ta) { const a=Array.isArray(ta)?ta:Object.values(ta); setTodosAnnelie(a); cacheSet("todosAnnelie",a); }
       setSync("ok");
-    } catch { setSync("err"); }
+    } catch { setSync(cacheGet("einkauf")?"cache":"err"); }
     setGeladen(true);
   }, []);
 
@@ -949,7 +1090,7 @@ const App = () => {
 
   const addBestand = (id,items) => setBestand(p=>{const n={...p,[id]:[...(p[id]||[]),...items.map(i=>({...i,id:uid(),datum:datum()}))]};speichern("bestand",n);return n;});
   const remBestand = (id,iid) => setBestand(p=>{const n={...p,[id]:(p[id]||[]).filter(i=>i.id!==iid)};speichern("bestand",n);return n;});
-  const addEinkauf = items => setEinkauf(p=>{const n=[...p,...items.map(i=>({...i,id:uid(),erledigt:false,datum:datum()}))];speichern("einkauf",n);return n;});
+  const addEinkauf = items => setEinkauf(p=>{const n=[...p,...items.map(i=>({...i,id:uid(),erledigt:false,datum:datum()}))];speichern("einkauf",n);cacheSet("einkauf",n);return n;});
   const togEinkauf = id => setEinkauf(p=>{const n=p.map(i=>i.id===id?{...i,erledigt:!i.erledigt}:i);speichern("einkauf",n);return n;});
   const remEinkauf = id => setEinkauf(p=>{const n=p.filter(i=>i.id!==id);speichern("einkauf",n);return n;});
   const shopEinkauf = (id,s) => setEinkauf(p=>{const n=p.map(i=>i.id===id?{...i,shop:s}:i);speichern("einkauf",n);return n;});
@@ -960,9 +1101,14 @@ const App = () => {
     setEinkauf(p=>{const n=p.map(i=>i.id===item.id?{...i,erledigt:true}:i);speichern("einkauf",n);return n;});
   };
   const clearEinkauf = () => setEinkauf(p=>{const n=p.filter(i=>!i.erledigt);speichern("einkauf",n);return n;});
-  const addTodo = (txt,pr) => setTodos(p=>{const n=[{id:uid(),text:txt,prioritaet:pr,erledigt:false,datum:datum()},...p];speichern("todos",n);return n;});
+  const addTodo = (txt,pr) => setTodos(p=>{const n=[{id:uid(),text:txt,prioritaet:pr,erledigt:false,datum:datum(),subs:[]},...p];speichern("todos",n);return n;});
+  const addTodoAnnelie = (txt,pr) => setTodosAnnelie(p=>{const n=[{id:uid(),text:txt,prioritaet:pr,erledigt:false,datum:datum(),subs:[]},...p];speichern("todosAnnelie",n);return n;});
   const togTodo = id => setTodos(p=>{const n=p.map(t=>t.id===id?{...t,erledigt:!t.erledigt}:t);speichern("todos",n);return n;});
+  const togTodoAnnelie = id => setTodosAnnelie(p=>{const n=p.map(t=>t.id===id?{...t,erledigt:!t.erledigt}:t);speichern("todosAnnelie",n);return n;});
   const remTodo = id => setTodos(p=>{const n=p.filter(t=>t.id!==id);speichern("todos",n);return n;});
+  const remTodoAnnelie = id => setTodosAnnelie(p=>{const n=p.filter(t=>t.id!==id);speichern("todosAnnelie",n);return n;});
+  const updateTodo = (id,f) => setTodos(p=>{const n=p.map(t=>t.id===id?{...t,...f}:t);speichern("todos",n);return n;});
+  const updateTodoAnnelie = (id,f) => setTodosAnnelie(p=>{const n=p.map(t=>t.id===id?{...t,...f}:t);speichern("todosAnnelie",n);return n;});
   const setKFn = fn => setKassenbons(p=>{const n=typeof fn==="function"?fn(p):fn;speichern("kassenbons",n);return n;});
 
   if(!aktiv) return <Einrichtung onStart={()=>setAktiv(true)}/>;
@@ -976,7 +1122,7 @@ const App = () => {
 
   const gB = Object.values(bestand).reduce((s,a)=>s+a.length,0);
   const oE = einkauf.filter(i=>!i.erledigt).length;
-  const oT = todos.filter(t=>!t.erledigt).length;
+  const oT = todos.filter(t=>!t.erledigt).length + todosAnnelie.filter(t=>!t.erledigt).length;
   const TABS = [{id:"bestand",l:"Bestand",i:"📦"},{id:"einkauf",l:"Einkauf",i:"🛒"},{id:"uebersicht",l:"Übersicht",i:"📊"},{id:"kassenbon",l:"Kassenbon",i:"🧾"},{id:"aufgaben",l:"Aufgaben",i:"✅"}];
   const sC = sync==="ok"?"#4ade80":sync==="err"?"#f87171":"#fbbf24";
   const kalAktiv = lsGet("hm_kal")==="1";
@@ -1007,7 +1153,7 @@ const App = () => {
         {tab==="einkauf"    && <EinkaufTab einkauf={einkauf} onAdd={addEinkauf} onToggle={togEinkauf} onRemove={remEinkauf} onShop={shopEinkauf} onClear={clearEinkauf} onUpdate={updateEinkauf} onEinlagern={einlagern} bestand={bestand}/>}
         {tab==="uebersicht" && <UebersichtTab bestand={bestand} einkauf={einkauf} kassenbons={kassenbons} todos={todos}/>}
         {tab==="kassenbon"  && <KassenbonTab kassenbons={kassenbons} setKassenbons={setKFn} onAddEinkauf={addEinkauf}/>}
-        {tab==="aufgaben"   && <AufgabenTab todos={todos} onAdd={addTodo} onToggle={togTodo} onRemove={remTodo}/>}
+        {tab==="aufgaben"   && <AufgabenTab todos={todos} todosAnnelie={todosAnnelie} onAdd={addTodo} onAddAnnelie={addTodoAnnelie} onToggle={togTodo} onToggleAnnelie={togTodoAnnelie} onRemove={remTodo} onRemoveAnnelie={remTodoAnnelie} onUpdate={updateTodo} onUpdateAnnelie={updateTodoAnnelie}/>}
       </div>
 
       <nav style={{position:"fixed",bottom:0,left:0,width:"100%",background:"white",borderTop:"1px solid #e5e7eb",display:"flex",boxShadow:"0 -2px 10px rgba(0,0,0,0.08)",zIndex:100}}>
