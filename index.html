@@ -1355,7 +1355,6 @@ const App = () => {
       if(ta) { const a=Array.isArray(ta)?ta:Object.values(ta); setTodosAnnelie(a); cacheSet("todosAnnelie",a); }
       if(kn && typeof kn==="object") { setKartonNamenState(kn); cacheSet("kartonNamen",kn); }
       setSync("ok");
-      const kn=cacheGet("kartonNamen"); if(kn) setKartonNamenState(kn);
     } catch { setSync(cacheGet("einkauf")?"cache":"err"); }
     setGeladen(true);
   }, []);
