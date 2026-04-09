@@ -44,18 +44,18 @@ const BEREICHE = [
   ]},
   {id:"nf", name:"Gr. Keller", icon:"🏠", orte:[
     // Regalwand
-    {id:"nf01", name:"Regal 1 Links",  icon:"🗄️", info:"Nr.14", nr:14, gruppe:"Regalwand", faecher:[]},
-    {id:"nf02", name:"Regal 1 Mitte",  icon:"🗄️", info:"Nr.15", nr:15, gruppe:"Regalwand", faecher:[]},
-    {id:"nf03", name:"Regal 1 Rechts", icon:"🗄️", info:"Nr.16", nr:16, gruppe:"Regalwand", faecher:[]},
-    {id:"nf04", name:"Regal 2 Links",  icon:"🗄️", info:"Nr.17", nr:17, gruppe:"Regalwand", faecher:[]},
-    {id:"nf05", name:"Regal 2 Mitte",  icon:"🗄️", info:"Nr.18", nr:18, gruppe:"Regalwand", faecher:[]},
-    {id:"nf06", name:"Regal 2 Rechts", icon:"🗄️", info:"Nr.19", nr:19, gruppe:"Regalwand", faecher:[]},
-    {id:"nf07", name:"Regal 3 Links",  icon:"🗄️", info:"Nr.20", nr:20, gruppe:"Regalwand", faecher:[]},
-    {id:"nf08", name:"Regal 3 Mitte",  icon:"🗄️", info:"Nr.21", nr:21, gruppe:"Regalwand", faecher:[]},
-    {id:"nf09", name:"Regal 3 Rechts", icon:"🗄️", info:"Nr.22", nr:22, gruppe:"Regalwand", faecher:[]},
-    {id:"nf10", name:"Regal 4 Links",  icon:"🗄️", info:"Nr.23", nr:23, gruppe:"Regalwand", faecher:[]},
-    {id:"nf11", name:"Regal 4 Mitte",  icon:"🗄️", info:"Nr.24", nr:24, gruppe:"Regalwand", faecher:[]},
-    {id:"nf12", name:"Regal 4 Rechts", icon:"🗄️", info:"Nr.25", nr:25, gruppe:"Regalwand", faecher:[]},
+    {id:"nf01", kartons:10, name:"Regal 1 Links",  icon:"🗄️", info:"Nr.14", nr:14, gruppe:"Regalwand", faecher:[]},
+    {id:"nf02", kartons:13, name:"Regal 1 Mitte",  icon:"🗄️", info:"Nr.15", nr:15, gruppe:"Regalwand", faecher:[]},
+    {id:"nf03", kartons:10, name:"Regal 1 Rechts", icon:"🗄️", info:"Nr.16", nr:16, gruppe:"Regalwand", faecher:[]},
+    {id:"nf04", kartons:10, name:"Regal 2 Links",  icon:"🗄️", info:"Nr.17", nr:17, gruppe:"Regalwand", faecher:[]},
+    {id:"nf05", kartons:10, name:"Regal 2 Mitte",  icon:"🗄️", info:"Nr.18", nr:18, gruppe:"Regalwand", faecher:[]},
+    {id:"nf06", kartons:10, name:"Regal 2 Rechts", icon:"🗄️", info:"Nr.19", nr:19, gruppe:"Regalwand", faecher:[]},
+    {id:"nf07", kartons:10, name:"Regal 3 Links",  icon:"🗄️", info:"Nr.20", nr:20, gruppe:"Regalwand", faecher:[]},
+    {id:"nf08", kartons:10, name:"Regal 3 Mitte",  icon:"🗄️", info:"Nr.21", nr:21, gruppe:"Regalwand", faecher:[]},
+    {id:"nf09", kartons:10, name:"Regal 3 Rechts", icon:"🗄️", info:"Nr.22", nr:22, gruppe:"Regalwand", faecher:[]},
+    {id:"nf10", kartons:10, name:"Regal 4 Links",  icon:"🗄️", info:"Nr.23", nr:23, gruppe:"Regalwand", faecher:[]},
+    {id:"nf11", kartons:10, name:"Regal 4 Mitte",  icon:"🗄️", info:"Nr.24", nr:24, gruppe:"Regalwand", faecher:[]},
+    {id:"nf12", kartons:10, name:"Regal 4 Rechts", icon:"🗄️", info:"Nr.25", nr:25, gruppe:"Regalwand", faecher:[]},
     // Keller Mitte
     {id:"nf13", name:"Keller Mitte",   icon:"🏚️", info:"Nr.26 · Fächer 1–6", nr:26, gruppe:"Keller Mitte", faecher:[1,2,3,4,5,6]},
     // Kleiderschränke
@@ -1070,33 +1070,51 @@ END:VCALENDAR`;
 
 
 // ── NONFOOD TAB ───────────────────────────────────────────
-const NonfoodTab = ({bestand, onAdd, onRemove}) => {
+const NonfoodTab = ({bestand, onAdd, onRemove, kartonNamen, setKartonNamen}) => {
   const [oId, setOId] = useState("nf01");
   const [neuFach, setNeuFach] = useState(null);
+  const [neuKarton, setNeuKarton] = useState(null);
   const [busy, setBusy] = useState(false);
   const [zuletzt, setZuletzt] = useState("");
   const [editItem, setEditItem] = useState(null);
   const [zeigAZ, setZeigAZ] = useState(false);
+  const [editKartonName, setEditKartonName] = useState(null); // {key, val}
 
   const ort = ALLE_ORTE.find(o=>o.id===oId);
   const hatFach = (ort?.faecher||[]).length > 0;
+  const hatKartons = (ort?.kartons||0) > 0;
   const alleItems = bestand[oId] || [];
 
-  // Gruppen für Navigation
   const GRUPPEN_NF = ["Regalwand","Kleiderschrank","Schränke","Schubladenschrank","Keller Mitte","Weitere Räume"];
   const [aktGruppe, setAktGruppe] = useState("Regalwand");
-
   const orteInGruppe = NONFOOD_ORTE.filter(o=>o.gruppe===aktGruppe);
 
-  const hinzufuegen = async (txt, fach) => {
+  // Karton-Namen Key: "nf02_k3" -> "Winterjacken"
+  const kartonKey = (ortId, nr) => ortId + "_k" + nr;
+  const getKartonName = (ortId, nr) => kartonNamen?.[kartonKey(ortId,nr)] || "";
+  const saveKartonName = (ortId, nr, name) => {
+    const neu = {...(kartonNamen||{}), [kartonKey(ortId,nr)]: name};
+    setKartonNamen(neu);
+  };
+
+  // Items im gewählten Karton
+  const itemsInKarton = neuKarton != null
+    ? alleItems.filter(i=>Number(i.karton)===Number(neuKarton))
+    : alleItems;
+
+  const hinzufuegen = async (txt, karton, fach) => {
     setBusy(true);
     try {
       let parsed;
       try { parsed = await claudeCall([{role:"user",content:txt}], 'Extrahiere ALLE Artikel. NUR JSON-Array:[{"name":"X","qty":1,"unit":"Stück"}]'); }
       catch { parsed = parseText(txt); }
       if(parsed && parsed.length) {
-        onAdd(oId, parsed.map(x=>({...x, fach: fach!=null ? Number(fach) : null})));
-        setZuletzt("✓ " + parsed.length + " Artikel" + (fach!=null ? " → Regal/Fach "+fach : ""));
+        onAdd(oId, parsed.map(x=>({...x,
+          karton: karton!=null ? Number(karton) : null,
+          fach: fach!=null ? Number(fach) : null
+        })));
+        const kname = karton!=null ? getKartonName(oId,karton) || "Karton "+karton : "";
+        setZuletzt("✓ " + parsed.length + " Artikel" + (kname?" → "+kname:"") );
         setTimeout(()=>setZuletzt(""), 3000);
       }
     } catch(e) { console.error(e); }
@@ -1115,7 +1133,6 @@ const NonfoodTab = ({bestand, onAdd, onRemove}) => {
       </div>
 
       {zeigAZ ? (
-        /* A-Z Gesamtliste */
         <div style={{background:"white",borderRadius:14,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
           {nfAZ.length===0
             ?<div style={{textAlign:"center",padding:"20px",color:"#9ca3af",fontSize:16}}>Noch keine Artikel</div>
@@ -1124,11 +1141,13 @@ const NonfoodTab = ({bestand, onAdd, onRemove}) => {
                 <div style={{flex:1}}>
                   <span style={{fontSize:19,fontWeight:800}}>{item.name}</span>
                   <span style={{fontSize:15,color:"#6b7280",marginLeft:6,fontWeight:700}}>{item.qty} {item.unit}</span>
-                  {item.fach!=null&&<span style={{fontSize:13,color:"white",marginLeft:5,background:"#6366f1",padding:"2px 6px",borderRadius:5,fontWeight:700}}>Regal {item.fach}</span>}
+                  {item.karton!=null&&<span style={{fontSize:13,color:"white",marginLeft:5,background:"#6366f1",padding:"2px 6px",borderRadius:5,fontWeight:700}}>
+                    {getKartonName(item.ort.id,item.karton)||"Karton "+item.karton}
+                  </span>}
                 </div>
                 <div style={{textAlign:"right",flexShrink:0}}>
                   <div style={{fontSize:14,fontWeight:700,color:"#6366f1"}}>{item.ort.name}</div>
-                  <div style={{fontSize:12,color:"#9ca3af"}}>Nr.{item.ort.nr} · {item.ort.gruppe}</div>
+                  <div style={{fontSize:12,color:"#9ca3af"}}>Nr.{item.ort.nr}</div>
                 </div>
               </div>
             ))
@@ -1139,13 +1158,12 @@ const NonfoodTab = ({bestand, onAdd, onRemove}) => {
           {/* Gruppen-Tabs */}
           <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:10}}>
             {GRUPPEN_NF.map(g=>{
-              const cnt = NONFOOD_ORTE.filter(o=>o.gruppe===g).reduce((s,o)=>s+(bestand[o.id]||[]).length,0);
+              const cnt=NONFOOD_ORTE.filter(o=>o.gruppe===g).reduce((s,o)=>s+(bestand[o.id]||[]).length,0);
               return (
-                <button key={g} onClick={()=>{setAktGruppe(g);setOId(NONFOOD_ORTE.find(o=>o.gruppe===g)?.id||"nf01");setNeuFach(null);}}
+                <button key={g} onClick={()=>{setAktGruppe(g);setOId(NONFOOD_ORTE.find(o=>o.gruppe===g)?.id||"nf01");setNeuFach(null);setNeuKarton(null);}}
                   style={{padding:"6px 11px",borderRadius:16,border:"2px solid",fontSize:14,cursor:"pointer",fontWeight:aktGruppe===g?700:400,
                     borderColor:aktGruppe===g?"#6366f1":"#e5e7eb",
-                    background:aktGruppe===g?"#6366f1":"white",
-                    color:aktGruppe===g?"white":"#374151"}}>
+                    background:aktGruppe===g?"#6366f1":"white",color:aktGruppe===g?"white":"#374151"}}>
                   {g}{cnt>0&&<span style={{marginLeft:4,background:aktGruppe===g?"rgba(255,255,255,0.3)":"#6366f1",color:"white",borderRadius:8,padding:"0 5px",fontSize:12}}>{cnt}</span>}
                 </button>
               );
@@ -1153,28 +1171,78 @@ const NonfoodTab = ({bestand, onAdd, onRemove}) => {
           </div>
 
           {/* Orte in Gruppe */}
-          <div style={{background:'white',borderRadius:12,padding:'8px 10px',marginBottom:10,boxShadow:'0 1px 4px rgba(0,0,0,0.05)'}}>
-            <div style={{display:'flex',flexWrap:'wrap',gap:5}}>
-              {orteInGruppe.map(o=>{
-                const cnt=(bestand[o.id]||[]).length;
-                return (
-                  <button key={o.id} onClick={()=>{setOId(o.id);setNeuFach(null);}}
-                    style={{padding:'5px 10px',borderRadius:12,border:'2px solid',fontSize:15,cursor:'pointer',fontWeight:oId===o.id?800:500,
-                      borderColor:oId===o.id?'#4f46e5':'#e5e7eb',
-                      background:oId===o.id?'#6366f1':'white',
-                      color:oId===o.id?'white':'#374151',
-                      display:'flex',alignItems:'center',gap:4}}>
-                    <span style={{fontSize:11,opacity:0.7}}>#{o.nr}</span>
-                    {o.name}
-                    {cnt>0&&<span style={{background:oId===o.id?'rgba(255,255,255,0.3)':'#6366f1',color:'white',borderRadius:8,padding:'0 5px',fontSize:12,fontWeight:700}}>{cnt}</span>}
-                  </button>
-                );
-              })}
-            </div>
+          <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:10}}>
+            {orteInGruppe.map(o=>{
+              const cnt=(bestand[o.id]||[]).length;
+              return (
+                <button key={o.id} onClick={()=>{setOId(o.id);setNeuFach(null);setNeuKarton(null);}}
+                  style={{padding:"5px 9px",borderRadius:14,border:"2px solid",fontSize:14,cursor:"pointer",
+                    borderColor:oId===o.id?"#4f46e5":"#e5e7eb",
+                    background:oId===o.id?"#f0f0ff":"white",color:"#374151",fontWeight:oId===o.id?700:400,
+                    display:"flex",alignItems:"center",gap:3}}>
+                  <span style={{background:"#6366f1",color:"white",borderRadius:"50%",width:17,height:17,display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,flexShrink:0}}>{o.nr}</span>
+                  {o.name}
+                  {cnt>0&&<span style={{background:"#6366f1",color:"white",borderRadius:8,padding:"0 5px",fontSize:11}}>{cnt}</span>}
+                </button>
+              );
+            })}
           </div>
 
-          {/* Fach-Auswahl */}
-          {hatFach && (
+          {/* Karton-Auswahl (nur bei Regalwand) */}
+          {hatKartons && (
+            <div style={{background:"white",borderRadius:12,padding:10,marginBottom:8,boxShadow:"0 1px 4px rgba(0,0,0,0.05)"}}>
+              <div style={{fontSize:14,fontWeight:700,color:"#9ca3af",marginBottom:6}}>KARTON WÄHLEN ({ort.kartons} Kartons):</div>
+              <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+                <button onClick={()=>setNeuKarton(null)}
+                  style={{padding:"4px 8px",borderRadius:12,border:"2px solid",fontSize:13,cursor:"pointer",
+                    borderColor:neuKarton===null?"#6366f1":"#e5e7eb",
+                    background:neuKarton===null?"#6366f1":"white",color:neuKarton===null?"white":"#374151",fontWeight:700}}>
+                  Alle
+                </button>
+                {Array.from({length:ort.kartons},(_,i)=>i+1).map(k=>{
+                  const kname = getKartonName(oId,k);
+                  const cnt = alleItems.filter(i=>Number(i.karton)===k).length;
+                  return (
+                    <button key={k} onClick={()=>setNeuKarton(k)}
+                      style={{padding:"4px 9px",borderRadius:12,border:"2px solid",fontSize:13,cursor:"pointer",
+                        borderColor:neuKarton===k?"#4f46e5":"#e5e7eb",
+                        background:neuKarton===k?"#4f46e5":"white",
+                        color:neuKarton===k?"white":"#374151",fontWeight:600,
+                        display:"flex",alignItems:"center",gap:3}}>
+                      <span style={{fontWeight:800}}>{k}</span>
+                      {kname&&<span style={{fontSize:12}}>{kname}</span>}
+                      {cnt>0&&<span style={{background:neuKarton===k?"rgba(255,255,255,0.3)":"#6366f1",color:"white",borderRadius:8,padding:"0 5px",fontSize:11}}>{cnt}</span>}
+                    </button>
+                  );
+                })}
+              </div>
+              {/* Karton benennen */}
+              {neuKarton!=null && (
+                <div style={{marginTop:8,display:"flex",gap:6,alignItems:"center"}}>
+                  {editKartonName?.key===kartonKey(oId,neuKarton) ? (
+                    <>
+                      <input value={editKartonName.val} onChange={e=>setEditKartonName(p=>({...p,val:e.target.value}))}
+                        placeholder={`Name für Karton ${neuKarton}…`} autoFocus
+                        style={{flex:1,padding:"6px 10px",borderRadius:8,border:"2px solid #6366f1",fontSize:15,outline:"none"}}/>
+                      <button onClick={()=>{saveKartonName(oId,neuKarton,editKartonName.val);setEditKartonName(null);}}
+                        style={{padding:"6px 12px",background:"#6366f1",color:"white",border:"none",borderRadius:8,cursor:"pointer",fontWeight:700,fontSize:15}}>✓</button>
+                      <button onClick={()=>setEditKartonName(null)}
+                        style={{padding:"6px 10px",background:"#e5e7eb",color:"#374151",border:"none",borderRadius:8,cursor:"pointer",fontSize:15}}>✕</button>
+                    </>
+                  ) : (
+                    <button onClick={()=>setEditKartonName({key:kartonKey(oId,neuKarton), val:getKartonName(oId,neuKarton)})}
+                      style={{padding:"5px 12px",background:"#f0f0ff",border:"1px solid #6366f1",borderRadius:8,cursor:"pointer",fontSize:14,color:"#4f46e5",fontWeight:600}}>
+                      ✏️ {getKartonName(oId,neuKarton)||"Karton "+neuKarton+" benennen"}
+                    </button>
+                  )}
+                  {neuKarton!=null&&<span style={{fontSize:14,color:"white",background:"#e53e3e",padding:"2px 9px",borderRadius:6,fontWeight:800}}>✓ Karton {neuKarton}</span>}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Fach-Auswahl (für andere) */}
+          {hatFach && !hatKartons && (
             <div style={{background:"white",borderRadius:12,padding:"8px 12px",marginBottom:8,boxShadow:"0 1px 4px rgba(0,0,0,0.05)",display:"flex",flexWrap:"wrap",gap:5,alignItems:"center"}}>
               <span style={{fontSize:14,fontWeight:700,color:"#9ca3af"}}>REGAL/FACH:</span>
               <SchBtn label="– alle" aktiv={neuFach===null} onClick={()=>setNeuFach(null)} n={0}/>
@@ -1187,17 +1255,17 @@ const NonfoodTab = ({bestand, onAdd, onRemove}) => {
 
           {/* Toast + Eingabe */}
           {zuletzt&&<div style={{background:"#6366f1",color:"white",borderRadius:10,padding:"7px 14px",fontSize:16,fontWeight:700,textAlign:"center",marginBottom:8}}>{zuletzt}</div>}
-          <EingabeFeld ph={`Artikel für ${ort?.name||""}…`} onOK={txt=>hinzufuegen(txt,neuFach)} busy={busy}/>
+          <EingabeFeld ph={`Artikel${neuKarton!=null?" → "+(getKartonName(oId,neuKarton)||"Karton "+neuKarton):""}…`} onOK={txt=>hinzufuegen(txt,neuKarton,neuFach)} busy={busy}/>
 
           {/* Artikelliste */}
           <div style={{background:"white",borderRadius:14,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
             <div style={{padding:"8px 14px",background:"#f0f0ff",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-              <span style={{fontWeight:700,fontSize:16}}>{ort?.icon} {ort?.name} <span style={{fontSize:13,color:"#9ca3af"}}>{ort?.info}</span></span>
-              <span style={{fontSize:16,color:"#6b7280"}}>{alleItems.length} Artikel</span>
+              <span style={{fontWeight:700,fontSize:16}}>{ort?.icon} {ort?.name} {neuKarton!=null&&<span style={{color:"#6366f1"}}>· {getKartonName(oId,neuKarton)||"Karton "+neuKarton}</span>}</span>
+              <span style={{fontSize:16,color:"#6b7280"}}>{itemsInKarton.length}</span>
             </div>
-            {alleItems.length===0
-              ?<div style={{textAlign:"center",padding:"18px",color:"#9ca3af",fontSize:16}}>Leer</div>
-              :alleItems.map((item,i)=>(
+            {itemsInKarton.length===0
+              ?<div style={{textAlign:"center",padding:"16px",color:"#9ca3af",fontSize:15}}>Leer – Artikel eingeben</div>
+              :itemsInKarton.map((item,i)=>(
                 <div key={item.id}>
                   {editItem?.id===item.id ? (
                     <div style={{padding:"10px 14px",background:"#f0f0ff"}}>
@@ -1210,24 +1278,24 @@ const NonfoodTab = ({bestand, onAdd, onRemove}) => {
                           style={{flex:1,padding:"7px",borderRadius:8,border:"1.5px solid #e5e7eb",fontSize:16,outline:"none"}}>
                           {["Stück","kg","g","L","ml","Packung","Flasche","Dose","Paar","Set","Kasten"].map(u=><option key={u}>{u}</option>)}
                         </select>
-                        {hatFach&&<select value={editItem.fach||""} onChange={e=>setEditItem(p=>({...p,fach:e.target.value?Number(e.target.value):null}))}
-                          style={{width:85,padding:"7px",borderRadius:8,border:"1.5px solid #e5e7eb",fontSize:15,outline:"none"}}>
+                        {hatKartons&&<select value={editItem.karton||""} onChange={e=>setEditItem(p=>({...p,karton:e.target.value?Number(e.target.value):null}))}
+                          style={{width:95,padding:"7px",borderRadius:8,border:"1.5px solid #e5e7eb",fontSize:14,outline:"none"}}>
                           <option value="">–</option>
-                          {(ort?.faecher||[]).map(f=><option key={f} value={f}>Regal {f}</option>)}
+                          {Array.from({length:ort?.kartons||0},(_,i)=>i+1).map(k=><option key={k} value={k}>{getKartonName(oId,k)||"Karton "+k}</option>)}
                         </select>}
                       </div>
                       <div style={{display:"flex",gap:6}}>
-                        <button onClick={()=>{onRemove(oId,item.id);onAdd(oId,[{name:editItem.name,qty:parseFloat(editItem.qty)||1,unit:editItem.unit,fach:editItem.fach??null}]);setEditItem(null);}}
-                          style={{flex:1,padding:"9px",background:"#6366f1",color:"white",border:"none",borderRadius:8,cursor:"pointer",fontWeight:800,fontSize:17}}>✓ Speichern</button>
+                        <button onClick={()=>{onRemove(oId,item.id);onAdd(oId,[{name:editItem.name,qty:parseFloat(editItem.qty)||1,unit:editItem.unit,karton:editItem.karton??null,fach:editItem.fach??null}]);setEditItem(null);}}
+                          style={{flex:1,padding:"9px",background:"#6366f1",color:"white",border:"none",borderRadius:8,cursor:"pointer",fontWeight:800,fontSize:17}}>✓</button>
                         <button onClick={()=>setEditItem(null)} style={{padding:"9px 14px",background:"#e5e7eb",color:"#374151",border:"none",borderRadius:8,cursor:"pointer",fontSize:17}}>✕</button>
                       </div>
                     </div>
                   ):(
-                    <div style={{display:"flex",alignItems:"center",padding:"10px 14px",borderBottom:i<alleItems.length-1?"1px solid #f3f4f6":"none",gap:8,cursor:"pointer"}} onClick={()=>setEditItem({...item})}>
+                    <div style={{display:"flex",alignItems:"center",padding:"10px 14px",borderBottom:i<itemsInKarton.length-1?"1px solid #f3f4f6":"none",gap:8,cursor:"pointer"}} onClick={()=>setEditItem({...item})}>
                       <div style={{flex:1}}>
                         <span style={{fontSize:19,fontWeight:800}}>{item.name}</span>
                         <span style={{fontSize:15,color:"#6b7280",marginLeft:8,fontWeight:700}}>{item.qty} {item.unit}</span>
-                        {item.fach!=null&&<span style={{fontSize:13,color:"white",marginLeft:6,background:"#6366f1",padding:"2px 6px",borderRadius:5,fontWeight:700}}>Regal {item.fach}</span>}
+                        {item.karton!=null&&<span style={{fontSize:13,color:"white",marginLeft:6,background:"#6366f1",padding:"2px 6px",borderRadius:5,fontWeight:700}}>{getKartonName(oId,item.karton)||"Karton "+item.karton}</span>}
                         <span style={{fontSize:12,color:"#d0d0d0",marginLeft:4}}>✏️</span>
                       </div>
                       <span style={{fontSize:12,color:"#d1d5db",flexShrink:0}}>{item.datum}</span>
@@ -1252,6 +1320,7 @@ const App = () => {
   const [bestand, setBestand] = useState({});
   const [einkauf, setEinkauf] = useState([]);
   const [kassenbons, setKassenbons] = useState([]);
+  const [kartonNamen, setKartonNamenState] = useState({});
   const [todos, setTodos] = useState([]);
   const [todosAnnelie, setTodosAnnelie] = useState([]);
   const [geladen, setGeladen] = useState(false);
@@ -1275,16 +1344,18 @@ const App = () => {
       setGeladen(true); // App sofort zeigen
     }
     try {
-      const [b,e,k,t,ta] = await Promise.all([
+      const [b,e,k,t,ta,kn] = await Promise.all([
         fbLesen("bestand"),fbLesen("einkauf"),fbLesen("kassenbons"),
-        fbLesen("todos"),fbLesen("todosAnnelie")
+        fbLesen("todos"),fbLesen("todosAnnelie"),fbLesen("kartonNamen")
       ]);
       if(b && typeof b==="object") { setBestand(b); cacheSet("bestand",b); }
       if(e) { const a=Array.isArray(e)?e:Object.values(e); setEinkauf(a); cacheSet("einkauf",a); }
       if(k) { const a=Array.isArray(k)?k:Object.values(k); setKassenbons(a); cacheSet("kassenbons",a); }
       if(t) { const a=Array.isArray(t)?t:Object.values(t); setTodos(a); cacheSet("todos",a); }
       if(ta) { const a=Array.isArray(ta)?ta:Object.values(ta); setTodosAnnelie(a); cacheSet("todosAnnelie",a); }
+      if(kn && typeof kn==="object") { setKartonNamenState(kn); cacheSet("kartonNamen",kn); }
       setSync("ok");
+      const kn=cacheGet("kartonNamen"); if(kn) setKartonNamenState(kn);
     } catch { setSync(cacheGet("einkauf")?"cache":"err"); }
     setGeladen(true);
   }, []);
@@ -1319,6 +1390,11 @@ const App = () => {
   const addTodoAnnelie = (txt,pr) => setTodosAnnelie(p=>{const n=[{id:uid(),text:txt,prioritaet:pr,erledigt:false,datum:datum(),subs:[]},...p];speichern("todosAnnelie",n);return n;});
   const togTodo = id => setTodos(p=>{const n=p.map(t=>t.id===id?{...t,erledigt:!t.erledigt}:t);speichern("todos",n);return n;});
   const togTodoAnnelie = id => setTodosAnnelie(p=>{const n=p.map(t=>t.id===id?{...t,erledigt:!t.erledigt}:t);speichern("todosAnnelie",n);return n;});
+  const setKartonNamen = (namen) => {
+    setKartonNamenState(namen);
+    cacheSet("kartonNamen", namen);
+    speichern("kartonNamen", namen);
+  };
   const remTodo = id => setTodos(p=>{const n=p.filter(t=>t.id!==id);speichern("todos",n);return n;});
   const remTodoAnnelie = id => setTodosAnnelie(p=>{const n=p.filter(t=>t.id!==id);speichern("todosAnnelie",n);return n;});
   const updateTodo = (id,f) => setTodos(p=>{const n=p.map(t=>t.id===id?{...t,...f}:t);speichern("todos",n);return n;});
@@ -1366,7 +1442,7 @@ const App = () => {
         {tab==="bestand"    && <BestandTab bestand={bestand} onAdd={addBestand} onRemove={remBestand}/>}
         {tab==="einkauf"    && <EinkaufTab einkauf={einkauf} onAdd={addEinkauf} onToggle={togEinkauf} onRemove={remEinkauf} onShop={shopEinkauf} onClear={clearEinkauf} onUpdate={updateEinkauf} onEinlagern={einlagern} bestand={bestand}/>}
         {tab==="uebersicht" && <UebersichtTab bestand={bestand} einkauf={einkauf} kassenbons={kassenbons} todos={todos}/>}
-        {tab==="nonfood"    && <NonfoodTab bestand={bestand} onAdd={addBestand} onRemove={remBestand}/>}
+        {tab==="nonfood"    && <NonfoodTab bestand={bestand} onAdd={addBestand} onRemove={remBestand} kartonNamen={kartonNamen} setKartonNamen={setKartonNamen}/>}
         {tab==="kassenbon"  && <KassenbonTab kassenbons={kassenbons} setKassenbons={setKFn} onAddEinkauf={addEinkauf}/>}
         {tab==="aufgaben"   && <AufgabenTab todos={todos} todosAnnelie={todosAnnelie} onAdd={addTodo} onAddAnnelie={addTodoAnnelie} onToggle={togTodo} onToggleAnnelie={togTodoAnnelie} onRemove={remTodo} onRemoveAnnelie={remTodoAnnelie} onUpdate={updateTodo} onUpdateAnnelie={updateTodoAnnelie}/>}
       </div>
